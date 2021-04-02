@@ -13,10 +13,10 @@ Sigma = cov(X)
 mu = rep(0, ncol(X))
 # Leave one out using Dr. Sesia's original code
 filter_100 = knockoff::knockoff.filter(X[,-100], y = X[,100], statistic = knockoff::stat.glmnet_coefdiff, fdr = 0.5)
-# Leave one out using a wrapper to Dr. Sesia's original code
-stats_from_wrapper      = rlookc::generateLooksSlow(X, mu = mu, Sigma = Sigma, vars_to_omit = 100, output_type = "statistics")
-# Leave one out using a reimplementation that I hope will eventually be faster for our use case
-stats_from_reimplementation = rlookc::generateLooks(X, mu = mu, Sigma = Sigma, vars_to_omit = 100, output_type = "statistics")
+# Leave one out using a wrapper to a minor modification of Dr. Sesia's original code
+stats_from_wrapper          = rlookc::generateLooksSlow(X, mu = mu, Sigma = Sigma, vars_to_omit = 100, output_type = "statistics")
+# Leave one out using lookc
+stats_from_reimplementation = rlookc::generateLooks(    X, mu = mu, Sigma = Sigma, vars_to_omit = 100, output_type = "statistics")
 
 # All three show a very obvious correct signal on this toy example
 filter_100
@@ -26,11 +26,11 @@ plot(stats_from_reimplementation[[1]])
 # Regarding scaling, here are 5 looks done by brute force and then by low-rank updating.
 # On my 2016 Dell XPS13 with Dual-Core Intel® Core™ i5-6200U CPU @ 2.30GHz,
 # the low-rank updates win by a factor of 4, 46s to 11s.
-microbenchmark::microbenchmark(
+five_looks_sesia = microbenchmark::microbenchmark(
   times = 1,
   looks_brute_force =  lapply(96:100, function(k) {knockoff::create.gaussian(X[,-k], mu = mu[-k], Sigma = Sigma[-k,-k])})
 )
-microbenchmark::microbenchmark(
+five_looks_lookc = microbenchmark::microbenchmark(
   times = 1,
   looks_from_reimplementation = rlookc::generateLooks(X, mu = mu, Sigma = Sigma, vars_to_omit = 96:100, output_type = "knockoffs")
 )
@@ -39,7 +39,7 @@ microbenchmark::microbenchmark(
 do_pearson_screen = function(X, ko, y){
   rbind(cor(X, y), cor(ko, y)) %>% set_rownames(c("X", "knockoff"))
 }
-microbenchmark::microbenchmark(
+five_hundred_looks_lookc = microbenchmark::microbenchmark(
   times = 1,
   looks_from_reimplementation = rlookc::generateLooks(X,
                                                       mu = mu,
@@ -48,3 +48,4 @@ microbenchmark::microbenchmark(
                                                       statistic = do_pearson_screen,
                                                       output_type = "statistic")
 )
+knitr::kable(t(t(c(five_looks_sesia = five_looks_sesia$time, five_looks_lookc = five_looks_lookc$time, five_hundred_looks_lookc = five_hundred_looks_lookc$time ))) / 1e9)

@@ -37,20 +37,19 @@ computeGaussianKnockoffs = function (
   # Mostly the same as the original with a few more named intermediates that will be needed later
   SigmaInv = solve(Sigma)
   SigmaInv_s = SigmaInv %*% diag_s
-  mu_k = X - sweep(X, 2, mu, "-") %*% SigmaInv_s
-  Sigma_k = 2 * diag_s - diag_s %*% SigmaInv_s
-  R = chol(Sigma_k)
-  X_k = mu_k + matrix(rnorm(ncol(X) * nrow(X)), nrow(X)) %*% R
-  # This is new
+  mu_ko = X - sweep(X, 2, mu, "-") %*% SigmaInv_s
+  Sigma_ko = 2 * diag_s - diag_s %*% SigmaInv_s
+  R = chol(Sigma_ko)
+  X_ko = mu_ko + matrix(rnorm(ncol(X) * nrow(X)), nrow(X)) %*% R
   if( match.arg(output_type) == "knockoffs_compact" ){
     stop("This function cannot produce a compact representation.")
   }
   switch(
     match.arg(output_type),
-    knockoffs = X_k,
-    statistics = X_k, # Not what the user wants (yet) but it's what the wrapper needs to get there
-    pearson = X_k,    # ^ Same
-    parameters = list(ko_mean = mu_k, ko_sqrt_covariance = R, S = diag_s, SigmaInv = SigmaInv, knockoffs = X_k)
+    knockoffs = X_ko,
+    statistics = X_ko, # Not what the user wants (yet) but it's what the wrapper needs to get there
+    pearson = X_ko,    # ^ Same
+    parameters = list(ko_mean = mu_ko, ko_sqrt_covariance = R, S = diag_s, SigmaInv = SigmaInv, knockoffs = X_ko)
   )
 }
 
@@ -73,6 +72,9 @@ generateLooksSlow = function(
   output_type = c("knockoffs", "knockoffs_compact", "statistics", "parameters", "pearson"),
   ...
 ){
+  if(length(mu)==1){
+    mu = rep(mu, ncol(X))
+  }
   do_one = function(k){
     ko = computeGaussianKnockoffs(X[,-k],
                                   mu[-k],
@@ -121,6 +123,7 @@ generateLooksSlow = function(
 #' It's fast but rigid: the \code{statistic} arg is ignored and Pearson correlations are used.
 #' @param ... Passed to statistic
 #' @return See parameter \code{return_type}.
+#' @export
 generateLooks = function(
   X, mu, Sigma,
   method = c("asdp", "sdp", "equi"),
@@ -130,6 +133,9 @@ generateLooks = function(
   output_type = c("knockoffs", "knockoffs_compact", "statistics", "parameters", "pearson"),
   ...
 ){
+  if(length(mu)==1){
+    mu = rep(mu, ncol(X))
+  }
   # This calls a modification of Matteo Sesia's code that reveals more internals.
   precomputed_quantities = computeGaussianKnockoffs(
     X = X,
@@ -145,14 +151,13 @@ generateLooks = function(
     g = precomputed_quantities$SigmaInv[k, -k, drop = F]
     sqrt_h = sqrt(precomputed_quantities$SigmaInv[k, k])
     list(
-      # Mean of P(ko | X)
+      # Mean of P(ko | X) -- line 3 in derivation
       mean_update1_left = X[,k, drop = F],
       mean_update1_right = g %*% precomputed_quantities$S[-k, -k, drop = F],
       mean_update2_left = X[,-k, drop = F] %*% t(g/sqrt_h),
       mean_update2_right = (g/sqrt_h) %*% precomputed_quantities$S[-k,-k, drop = F],
-      # Sqrt of cov(ko | X)
-      sqrt_cov_update1 = precomputed_quantities$ko_sqrt_covariance[k, -k, drop = F], #Is this -k, k or k, -k?
-      sqrt_cov_update2 = (g/sqrt_h) %*% precomputed_quantities$S[-k, -k, drop = F]
+      # Sqrt of cov(ko | X) -- line 7 in derivation
+      sqrt_cov_update = (g/sqrt_h) %*% precomputed_quantities$S[-k, -k, drop = F]
     )
   }
   all_updates = lapply(vars_to_omit, get_compact_updates)
@@ -184,12 +189,12 @@ generateLooks = function(
       updates = all_updates[[which(vars_to_omit==k)]]
       return(
         list(
-          ko_mean = precomputed_quantities$ko_mean[,-k] + getMeanUpdate( updates ),
-          ko_sqrt_covariance = rbind(
-            precomputed_quantities$ko_sqrt_covariance[,-k],
-            rbind(updates$sqrt_cov_update1,
-                  updates$sqrt_cov_update2)
-          )
+          ko_mean                 = precomputed_quantities$ko_mean[           ,-k] + getMeanUpdate( updates ),
+          ko_covariance = crossprod(precomputed_quantities$ko_sqrt_covariance[,-k]) + getCovarianceUpdate( updates ),
+          ko_mean_naive           = precomputed_quantities$ko_mean[           ,-k],
+          ko_cov_naive  = crossprod(precomputed_quantities$ko_sqrt_covariance[,-k]),
+          S        = precomputed_quantities$S,
+          SigmaInv = precomputed_quantities$SigmaInv
         )
       )
     }
@@ -197,7 +202,7 @@ generateLooks = function(
   return( lapply( vars_to_omit, assemble_output ) )
 }
 
-#' Update knockoffs to omit variable k.
+#' Given the low-rank updates from generateLooks, update knockoffs to omit variable k.
 #'
 #' @param knockoffs Knockoffs computed with variable k included.
 #' @param k variable to omit.
@@ -221,14 +226,8 @@ getMeanUpdate = function(updates){
   )
 }
 getRandomUpdate = function(updates, n_obs){
-  with(updates,{
-    matrix( rnorm( n_obs ), ncol = 1 ) %*% (updates$sqrt_cov_update1) +
-      matrix( rnorm( n_obs ), ncol = 1 ) %*% (updates$sqrt_cov_update2)
-  })
+  matrix( rnorm( n_obs ), ncol = 1 ) %*% (updates$sqrt_cov_update)
 }
 getCovarianceUpdate = function(updates){
-  with(updates,{
-    crossprod(updates$sqrt_cov_update1) +
-      crossprod(updates$sqrt_cov_update2)
-  })
+  crossprod(updates$sqrt_cov_update)
 }

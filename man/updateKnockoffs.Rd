@@ -2,7 +2,7 @@
 % Please edit documentation in R/lookc.R
 \name{updateKnockoffs}
 \alias{updateKnockoffs}
-\title{Update knockoffs to omit variable k.}
+\title{Given the low-rank updates from generateLooks, update knockoffs to omit variable k.}
 \usage{
 updateKnockoffs(knockoffs, updates, k)
 }
@@ -14,5 +14,5 @@ updateKnockoffs(knockoffs, updates, k)
 \item{k}{variable to omit.}
 }
 \description{
-Update knockoffs to omit variable k.
+Given the low-rank updates from generateLooks, update knockoffs to omit variable k.
 }
