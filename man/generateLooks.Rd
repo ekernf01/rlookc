@@ -8,7 +8,7 @@ generateLooks(
   X,
   mu,
   Sigma,
-  method = c("asdp", "sdp", "equi"),
+  method = c("asdp", "sdp", "equi", "group"),
   diag_s = NULL,
   vars_to_omit = 1:ncol(X),
   statistic = knockoff::stat.glmnet_coefdiff,

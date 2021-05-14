@@ -1,5 +1,7 @@
 library("magrittr")
 
+# Tests related to leave-one-out knockoff construction.
+
 
 # Example where knockoffs look really different without v1
 Z = matrix(NA, ncol = 10, nrow = 100)

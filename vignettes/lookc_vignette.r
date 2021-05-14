@@ -25,7 +25,7 @@ plot(stats_from_reimplementation[[1]])
 
 # Regarding scaling, here are 5 looks done by brute force and then by low-rank updating.
 # On my 2016 Dell XPS13 with Dual-Core Intel® Core™ i5-6200U CPU @ 2.30GHz,
-# the low-rank updates win by a factor of 4, 46s to 11s.
+# the low-rank updates win by a factor of 4, 46s to 11s -- nearly ideal scaling.
 five_looks_sesia = microbenchmark::microbenchmark(
   times = 1,
   looks_brute_force =  lapply(96:100, function(k) {knockoff::create.gaussian(X[,-k], mu = mu[-k], Sigma = Sigma[-k,-k])})

@@ -8,7 +8,8 @@ computeGaussianKnockoffs(
   X,
   mu,
   Sigma,
-  method = c("asdp", "sdp", "equi"),
+  groups = NULL,
+  method = c("asdp", "sdp", "equi", "group"),
   diag_s = NULL,
   output_type = c("knockoffs", "knockoffs_compact", "statistics", "parameters")
 )
@@ -17,5 +18,5 @@ computeGaussianKnockoffs(
 This function is copied and lightly modified from the function \code{create.gaussian}
 in Matteo Sesia's R package 'knockoff', licensed
 under GPLv3 and published at https://github.com/msesia/knockoff-filter/tree/master/R .
-I needed to modify it to return some internals.
+I needed to modify it to return some internals and handle groups of variables.
 }

@@ -1,31 +1,45 @@
+
+
 #' Compute S, mean, covariance, and realizations of Gaussian knockoffs.
 #'
 #' This function is copied and lightly modified from the function \code{create.gaussian}
 #' in Matteo Sesia's R package 'knockoff', licensed
 #' under GPLv3 and published at https://github.com/msesia/knockoff-filter/tree/master/R .
-#' I needed to modify it to return some internals.
+#' I needed to modify it to return some internals and handle groups of variables.
+#'
+#' Results of "output_type" are downright mislabeled -- that's just a holdover from generateLooks and it's not meant for public use.
+#'
 computeGaussianKnockoffs = function (
   X,
   mu,
   Sigma,
-  method = c("asdp", "sdp", "equi"),
+  groups = NULL,
+  method = c("asdp", "sdp", "equi", "group"),
   diag_s = NULL,
   output_type = c("knockoffs", "knockoffs_compact", "statistics", "parameters")
 ){
-  # This part is identical to Sesia's original
+  # Input checking for S solver (Same as Sesia's code)
   method = match.arg(method)
   if ((nrow(Sigma) <= 500) && method == "asdp") {
     method = "sdp"
   }
+  # Input checking for groups
+  if( method == "group" ){
+    if( is.null( groups ) ){
+      stop("Groups must be specified.\n")
+    }
+    checkGroups(X, groups)
+  }
+  # This part is identical to Sesia's original except the added "group" option
   if (is.null(diag_s)) {
-    diag_s = diag(
+    diag_s =
       switch(
         match.arg(method),
         equi = knockoff::create.solve_equi(Sigma),
         sdp  = knockoff::create.solve_sdp(Sigma),
-        asdp = knockoff::create.solve_asdp(Sigma)
+        asdp = knockoff::create.solve_asdp(Sigma),
+        group = solveGroupEqui(Sigma, groups)
       )
-    )
   }
   if (is.null(dim(diag_s))) {
     diag_s = diag(diag_s, length(diag_s))
@@ -56,7 +70,7 @@ computeGaussianKnockoffs = function (
 #' Helper function for simple marginal screening via the pearson correlation.
 #'
 do_pearson_screen = function(X, ko, y){
-  rbind(cor(X, y), cor(ko, y)) %>% set_rownames(c("X", "knockoff"))
+  rbind(as.vector(cor(X, y)), as.vector(cor(ko, y))) %>% set_rownames(c("X", "knockoff"))
 }
 
 
@@ -65,7 +79,7 @@ do_pearson_screen = function(X, ko, y){
 #' @details see ?generateLooks .
 generateLooksSlow = function(
   X, mu, Sigma,
-  method = c("asdp", "sdp", "equi"),
+  method = c("asdp", "sdp", "equi", "group"),
   diag_s = NULL,
   statistic = knockoff::stat.glmnet_coefdiff,
   vars_to_omit = 1:ncol(X),
@@ -126,7 +140,7 @@ generateLooksSlow = function(
 #' @export
 generateLooks = function(
   X, mu, Sigma,
-  method = c("asdp", "sdp", "equi"),
+  method = c("asdp", "sdp", "equi", "group"),
   diag_s = NULL,
   vars_to_omit = 1:ncol(X),
   statistic = knockoff::stat.glmnet_coefdiff,

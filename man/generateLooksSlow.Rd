@@ -8,7 +8,7 @@ generateLooksSlow(
   X,
   mu,
   Sigma,
-  method = c("asdp", "sdp", "equi"),
+  method = c("asdp", "sdp", "equi", "group"),
   diag_s = NULL,
   statistic = knockoff::stat.glmnet_coefdiff,
   vars_to_omit = 1:ncol(X),
