@@ -20,3 +20,6 @@ in Matteo Sesia's R package 'knockoff', licensed
 under GPLv3 and published at https://github.com/msesia/knockoff-filter/tree/master/R .
 I needed to modify it to return some internals and handle groups of variables.
 }
+\details{
+Results of "output_type" are downright mislabeled -- that's just a holdover from generateLooks and it's not meant for public use.
+}

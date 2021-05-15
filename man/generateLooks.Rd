@@ -9,6 +9,7 @@ generateLooks(
   mu,
   Sigma,
   method = c("asdp", "sdp", "equi", "group"),
+  groups = NULL,
   diag_s = NULL,
   vars_to_omit = 1:ncol(X),
   statistic = knockoff::stat.glmnet_coefdiff,
@@ -27,8 +28,9 @@ generateLooks(
 \item{method}{either "equi", "sdp" or "asdp" (default: "asdp").
 This determines the method that will be used to minimize the correlation between the original variables and the knockoffs.}
 
-\item{diag_s}{vector of length p, containing the pre-computed covariances between the original
-variables and the knockoffs. This will be computed according to \code{method}, if not supplied.}
+\item{diag_s}{Square PxP matrix or a vector of length P, containing the pre-computed matrix S where
+\deqn{s_{jk} = cov(x_k, x_j) - cov(x_k, \tilde x_j)}.
+This will be computed according to \code{method}, if not supplied.}
 
 \item{statistic}{function used to assess variable importance. In addition to the options from
 the \code{knockoff} package, you can enter the string \code{"pearson"}. This will take advantage

@@ -11,14 +11,17 @@ easy_example = list(
 easy_example$Sigma = cor(easy_example$X)
 
 # Hard example: nearly exact dupes of features
+group_size = 5
+num_groups = 50
+num_obs = 2e3
 hard_example = list(
-  groups =  10 %>% multiply_by(0:49) %>% lapply(add, 1:10),
-  X = matrix(0, nrow = 2e3, ncol = 500)
+  groups =  group_size %>% multiply_by(seq(num_groups)-1) %>% lapply(add, 1:group_size),
+  X = matrix(0, nrow = num_obs, ncol = num_groups*group_size)
 )
 for(g in hard_example$groups){
-  x = rnorm(2e3)
+  x = rnorm(num_obs)
   for(j in g){
-    hard_example$X[,j] = x + rnorm(2e3)*0.1
+    hard_example$X[,j] = x + rnorm(num_obs)*0.1
   }
 }
 hard_example$Sigma = cor(hard_example$X)
@@ -37,25 +40,25 @@ testthat::test_that("Joint cov of X and knockoffs is SPD", {
   }
 })
 
-# Test if group-level FDR is honest 
+# Test if group-level FDR is honest
 # Also, does it beat the singly-generated knockoffs in power?
 easy_example$active_group_idx = sample(seq_along(easy_example$groups), replace = T, size = 2500)
 hard_example$active_group_idx = sample(seq_along(hard_example$groups), replace = T, size = 2500)
 easy_example$y = lapply(easy_example$active_group_idx, function(g) easy_example$X[,easy_example$groups[[g]][[1]]] + 0.1*rnorm(40))
-hard_example$y = lapply(hard_example$active_group_idx, function(g) hard_example$X[,hard_example$groups[[g]][[1]]] + 0.1*rnorm(2e3))
+hard_example$y = lapply(hard_example$active_group_idx, function(g) hard_example$X[,hard_example$groups[[g]][[1]]] + 0.1*rnorm(num_obs))
 testthat::test_that("Group selection controls the FDR", {
-  for( e in list(easy_example, hard_example)){
+  for( e in list(hard_example)){
     X_ko_eachone  = computeGaussianKnockoffs(X = e$X, mu = 0, Sigma = e$Sigma, method = "equi")
     X_ko_grouped  = computeGaussianKnockoffs(X = e$X, mu = 0, Sigma = e$Sigma, groups = e$groups, method = "group") %>% as.matrix
     stats_eachone = sapply( e$y, function( y ) marginal_screen( X = e$X, X_k = X_ko_eachone, y = y ) ) %>% t
     stats_grouped = sapply( e$y, function( y ) marginal_screen( X = e$X, X_k = X_ko_grouped, y = y ) ) %>% t %>%
       aggregateStats(e$groups)
-    calibration_eachone = check.calibration(ground_truth = e$groups[e$active_group_idx] %>% lapply(extract2, 1),  
-                                            W = stats_eachone, 
-                                            plot_savepath = "tests/individual_calibration.pdf")
-    calibration_grouped = check.calibration(ground_truth = e$active_group_idx,           
-                                            W = stats_grouped,
-                                            plot_savepath = "tests/group_calibration.pdf")
+    plot(1, 1, main = "Next 3 plots: calibration & \npower without grouping")
+    calibration_eachone = check.calibration(ground_truth = e$groups[e$active_group_idx] %>% lapply(extract2, 1),
+                                            W = stats_eachone)
+    plot(1, 1, main = "Next 3 plots: calibration & \npower with grouping")
+    calibration_grouped = check.calibration(ground_truth = e$active_group_idx,
+                                            W = stats_grouped)
   }
 })
 

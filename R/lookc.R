@@ -26,10 +26,14 @@ computeGaussianKnockoffs = function (
   # Input checking for groups
   if( method == "group" ){
     if( is.null( groups ) ){
-      stop("Groups must be specified.\n")
+      stop("If method is 'group', variable groups must be specified.\n")
     }
     checkGroups(X, groups)
   }
+  if( method != "group" & !is.null( groups ) ){
+    stop("Input unclear. If variable groups are specified, method must be 'group'.\n")
+  }
+
   # This part is identical to Sesia's original except the added "group" option
   if (is.null(diag_s)) {
     diag_s =
@@ -41,12 +45,13 @@ computeGaussianKnockoffs = function (
         group = solveGroupEqui(Sigma, groups)
       )
   }
-  if (is.null(dim(diag_s))) {
-    diag_s = diag(diag_s, length(diag_s))
+  if( is.vector( diag_s ) ){
+    diag_s = diag( diag_s, length( diag_s ) )
   }
-  if (all(diag_s == 0)) {
-    warning("The conditional knockoff covariance matrix is not positive definite. Knockoffs will have no power.")
-    return(X)
+  diag_s %<>% as.matrix()
+  if( all( diag_s == 0 ) ) {
+    warning( "The conditional knockoff covariance matrix is not positive definite. Knockoffs will have no power." )
+    return( X )
   }
   # Mostly the same as the original with a few more named intermediates that will be needed later
   SigmaInv = solve(Sigma)
@@ -81,6 +86,7 @@ generateLooksSlow = function(
   X, mu, Sigma,
   method = c("asdp", "sdp", "equi", "group"),
   diag_s = NULL,
+  groups = NULL,
   statistic = knockoff::stat.glmnet_coefdiff,
   vars_to_omit = 1:ncol(X),
   output_type = c("knockoffs", "knockoffs_compact", "statistics", "parameters", "pearson"),
@@ -89,13 +95,17 @@ generateLooksSlow = function(
   if(length(mu)==1){
     mu = rep(mu, ncol(X))
   }
+  if(is.null(dim(diag_s))){
+    diag_s = diag(diag_s)
+  }
   do_one = function(k){
     ko = computeGaussianKnockoffs(X[,-k],
                                   mu[-k],
                                   Sigma[-k,-k],
                                   method = method,
+                                  groups = groups %>% removeKFromGroups(k),
                                   output_type = output_type,
-                                  diag_s = diag_s[-k])
+                                  diag_s = diag_s[-k,-k])
     if(output_type=="pearson"){
       return(do_pearson_screen(X[,-k], ko, y = X[,k], ...))
     } else if(output_type=="statistics"){
@@ -117,8 +127,9 @@ generateLooksSlow = function(
 #' @param Sigma p-by-p covariance matrix for the Gaussian model of \eqn{X}.
 #' @param method either "equi", "sdp" or "asdp" (default: "asdp").
 #' This determines the method that will be used to minimize the correlation between the original variables and the knockoffs.
-#' @param diag_s vector of length p, containing the pre-computed covariances between the original
-#' variables and the knockoffs. This will be computed according to \code{method}, if not supplied.
+#' @param diag_s Square PxP matrix or a vector of length P, containing the pre-computed matrix S where
+#' \deqn{s_{jk} = cov(x_k, x_j) - cov(x_k, \tilde x_j)}.
+#' This will be computed according to \code{method}, if not supplied.
 #' @param statistic function used to assess variable importance. In addition to the options from
 #' the \code{knockoff} package, you can enter the string \code{"pearson"}. This will take advantage
 #' of the low-rank knockoff updates computed by generateLooks. This is only used if \code{output_type}
@@ -141,6 +152,7 @@ generateLooksSlow = function(
 generateLooks = function(
   X, mu, Sigma,
   method = c("asdp", "sdp", "equi", "group"),
+  groups = NULL,
   diag_s = NULL,
   vars_to_omit = 1:ncol(X),
   statistic = knockoff::stat.glmnet_coefdiff,
@@ -150,28 +162,36 @@ generateLooks = function(
   if(length(mu)==1){
     mu = rep(mu, ncol(X))
   }
-  # This calls a modification of Matteo Sesia's code that reveals more internals.
+  if(is.vector(diag_s)){
+    diag_s = diag(diag_s)
+  }
+  # This calls a modification of Matteo Sesia's code that reveals some internals for downstream use.
   precomputed_quantities = computeGaussianKnockoffs(
     X = X,
     mu = mu,
     Sigma = Sigma,
     method = method,
+    groups = groups,
     diag_s = diag_s,
     output_type = "parameters"
   )
 
-  # Do the rest of the work via cheaper rank-1 updates.
+  # Do the rest of the work via rank-1 updates.
   get_compact_updates = function(k){
-    g = precomputed_quantities$SigmaInv[k, -k, drop = F]
-    sqrt_h = sqrt(precomputed_quantities$SigmaInv[k, k])
+    g = precomputed_quantities$SigmaInv[+k, -k, drop = F]
+    h = precomputed_quantities$SigmaInv[+k, +k]
+    sqrt_h = sqrt(h)
     list(
       # Mean of P(ko | X) -- line 3 in derivation
-      mean_update1_left = X[,k, drop = F],
-      mean_update1_right = g %*% precomputed_quantities$S[-k, -k, drop = F],
-      mean_update2_left = X[,-k, drop = F] %*% t(g/sqrt_h),
-      mean_update2_right = (g/sqrt_h) %*% precomputed_quantities$S[-k,-k, drop = F],
-      # Sqrt of cov(ko | X) -- line 7 in derivation
-      sqrt_cov_update = (g/sqrt_h) %*% precomputed_quantities$S[-k, -k, drop = F]
+      mean_update1_left = X[,+k, drop = F] + X[,-k, drop = F] %*% t(g/h),
+      mean_update1_right = g %*% precomputed_quantities$S[-k,-k, drop = F],
+      # These extra terms are used only for grouped variables (when S is not diagonal)
+      mean_update2_left = -( X[,-k] %*% t(g) + X[,+k]*h ),
+      mean_update2_right = precomputed_quantities$S[+k,-k, drop = F],
+      # Sqrt of cov(ko | X) -- lines 8,18 in derivation
+      sqrt_cov_update =
+        (g/sqrt_h) %*% precomputed_quantities$S[-k, -k, drop = F] + # always used
+        sqrt_h * precomputed_quantities$S[+k, -k, drop = F] # 0 if S diagonal (no grouping)
     )
   }
   all_updates = lapply(vars_to_omit, get_compact_updates)

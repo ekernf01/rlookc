@@ -10,6 +10,7 @@ generateLooksSlow(
   Sigma,
   method = c("asdp", "sdp", "equi", "group"),
   diag_s = NULL,
+  groups = NULL,
   statistic = knockoff::stat.glmnet_coefdiff,
   vars_to_omit = 1:ncol(X),
   output_type = c("knockoffs", "knockoffs_compact", "statistics", "parameters",

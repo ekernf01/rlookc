@@ -1,15 +1,30 @@
-#' Make sure variable groups match data matrix (or any other matrix with one variable per column) 
+#' Make sure variable groups match data matrix (or any other matrix with one variable per column)
 #'
 checkGroups = function(X, groups){
   vars_expected = seq( ncol( X ) )
   vars_in_groups = sort( Reduce( c, groups ) )
   if( !all( vars_in_groups == vars_expected ) ){
-    browser()
     stop("Each variable must be in exactly one group. Use numbers, not names.\n")
   }
 }
-  
-  
+
+#' Remove one variable from a list of groups, shifting everything down.
+#'
+removeKFromGroups = function( groups, k ){
+  if(length(groups)==0){
+    groups = NULL
+  } else {
+    # Remove index k wherever it occurs
+    groups = lapply(groups, setdiff, k)
+    # If that leaves an empty group, remove it
+    groups = groups[sapply(groups, length)>0]
+    # Any variable >k now appears one slot to the left
+    groups = lapply(groups, function(x) x - ifelse(x>k, 1, 0))
+  }
+  groups
+}
+
+
 #' Given one knockoff test stat per variable, return one per group.
 #'
 aggregateStats = function(stats, groups, FUN = mean){
@@ -34,6 +49,14 @@ aggregateStats = function(stats, groups, FUN = mean){
 #'
 solveGroupEqui = function(Sigma, groups, do_fast = T){
   D = S = Matrix::Matrix(0, nrow = nrow(Sigma), ncol = ncol(Sigma))
+  safe_diag = function(x) {
+    stopifnot(is.vector(x))
+    if(length(x)>1){
+      return(diag(x))
+    } else {
+      return(x)
+    }
+  }
   sqrt_inv = function(X, power = -0.5){
     eigenstuff = eigen(X, symmetric = T)
     if(any(eigenstuff$values <= 0)){
@@ -42,7 +65,7 @@ solveGroupEqui = function(Sigma, groups, do_fast = T){
         "You'll need to prune one or more of these linearly redundant features: \n", paste0(g, collapse = " "), "\n")
       )
     }
-    eigenstuff$vectors %*% diag(eigenstuff$values ^ power) %*% t(eigenstuff$vectors)
+    eigenstuff$vectors %*% safe_diag(eigenstuff$values ^ power) %*% t(eigenstuff$vectors)
   }
   # Test of sqrt inv closure
   # M = matrix(rnorm(160), ncol = 4)
@@ -64,5 +87,5 @@ solveGroupEqui = function(Sigma, groups, do_fast = T){
     min_eigenvalue = min(eigen(M)$values)
   }
   S = min(min_eigenvalue, 1)*S
-  return(S)
+  return(as.matrix(S))
 }
