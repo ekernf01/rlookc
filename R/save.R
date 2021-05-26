@@ -50,12 +50,10 @@ loadCompactLooks = function(savepath, filetype = c("csv", "h5")){
   # Get updates as matrices
   temp = list()
   for( field in c(
-    "mean_update1_left",
-    "mean_update1_right",
-    "mean_update2_left",
-    "mean_update2_right",
+    "mean_update_left",
+    "mean_update_right",
     "sqrt_cov_update",
-    "random"
+    "random_update"
   )){
     temp[[field]] = do_load( field )
   }

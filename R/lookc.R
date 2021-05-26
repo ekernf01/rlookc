@@ -208,12 +208,8 @@ generateLooks = function(
     sqrt_h = sqrt(h)
     list(
       # E(ko[,-k] | X[,-k]) - E(ko[,-k] | X) -- line 14 in derivation
-      mean_update1_left =  X[,-k] %*% t(g) / h + X[,k, drop = F],
-      mean_update1_right = g %*% precomputed_quantities$S[-k,-k] + h*precomputed_quantities$S[k, -k, drop = F],
-      # This is a holdover from an earlier derivation, and I intend to delete it.
-      mean_update2_left = matrix(0, nrow = nrow(X), ncol = 1),
-      mean_update2_right = matrix(0, nrow = 1, ncol = ncol(X) - 1),
-
+      mean_update_left =  X[,-k] %*% t(g) / h + X[,k, drop = F],
+      mean_update_right = g %*% precomputed_quantities$S[-k,-k] + h*precomputed_quantities$S[k, -k, drop = F],
       # Sqrt of cov(ko[,-k] | X[,-k]) - cov(ko[,-k] | X)  -- line 24 in derivation
       sqrt_cov_update =
         (g/sqrt_h) %*% precomputed_quantities$S[-k, -k, drop = F] + # always used
@@ -225,7 +221,7 @@ generateLooks = function(
       # where Z is IID standard normal.
       # It helps to have 'Z' stored with the fixed updates, not generated de novo upon each use, so that
       # the exact same knockoffs are always re-assembled.
-      random = matrix( rnorm( nrow( X ) ), ncol = 1 )
+      random_update = matrix( rnorm( nrow( X ) ), ncol = 1 )
     )
   }
   updates = lapply(vars_to_omit, get_compact_updates)
@@ -313,12 +309,11 @@ formLookParameters = function(precomputed_quantities,  vars_to_omit, updates, k)
 #'
 getMeanUpdate = function(updates){
   with(updates,
-       mean_update1_left %*% mean_update1_right +
-         mean_update2_left %*% mean_update2_right
+       mean_update_left %*% mean_update_right
   )
 }
 getRandomUpdate = function(updates, n_obs){
-  updates$random %*% updates$sqrt_cov_update
+  updates$random_update %*% updates$sqrt_cov_update
 }
 
 # Used only for checking the math -- not needed for knockoff generation
