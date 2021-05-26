@@ -10,7 +10,8 @@ check.calibration(
   W,
   targeted_fdrs = (1:10)/10,
   plot_savepath = NULL,
-  verbose = F
+  verbose = F,
+  n_var = ncol(W)
 )
 }
 \description{

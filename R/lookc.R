@@ -7,7 +7,15 @@
 #' under GPLv3 and published at https://github.com/msesia/knockoff-filter/tree/master/R .
 #' I needed to modify it to return some internals and handle groups of variables.
 #'
-#' Results of "output_type" are downright mislabeled -- that's just a holdover from generateLooks and it's not meant for public use.
+#' Public use is not recommended when "output_type" is anything but "knockoffs",
+#' as results are poorly labeled.
+#' This was done in order to make the interface similar to generateLooks
+#' while still providing the correct functionality for internal use.
+#' Users should prefer generateLooks or Matteo Sesia's \code{knockoff::create.gaussian}.
+#'
+#' @param X @param mu  @param sigma  @param method @param groups  @param diag_s  @param output_type See \code{?generateLooks}.
+#' @param num_realizations Since the knockoff procedure is random, it can be useful to generate many instances,
+#' for instance in simulation studies. If >1, this returns a list of multiple realizations.
 #'
 computeGaussianKnockoffs = function (
   X,
@@ -16,7 +24,8 @@ computeGaussianKnockoffs = function (
   groups = NULL,
   method = c("asdp", "sdp", "equi", "group"),
   diag_s = NULL,
-  output_type = c("knockoffs", "knockoffs_compact", "statistics", "parameters")
+  output_type = c("knockoffs", "knockoffs_compact", "statistics", "parameters"),
+  num_realizations = 1
 ){
   # Input checking for S solver (Same as Sesia's code)
   method = match.arg(method)
@@ -32,6 +41,13 @@ computeGaussianKnockoffs = function (
   }
   if( method != "group" & !is.null( groups ) ){
     stop("Input unclear. If variable groups are specified, method must be 'group'.\n")
+  }
+  # Input checking for output type
+  if( match.arg(output_type) == "knockoffs_compact" ){
+    stop("This function cannot produce a compact representation.\n")
+  }
+  if( num_realizations != 1 & match.arg(output_type) != "knockoffs" ){
+    stop("For multiple realizations, only `output_type='knockoffs'` is supported.\n")
   }
 
   # This part is identical to Sesia's original except the added "group" option
@@ -53,15 +69,20 @@ computeGaussianKnockoffs = function (
     warning( "The conditional knockoff covariance matrix is not positive definite. Knockoffs will have no power." )
     return( X )
   }
-  # Mostly the same as the original with a few more named intermediates that will be needed later
+  # Mostly the same as the original code with a few more named intermediates that will be needed later
   SigmaInv = solve(Sigma)
   SigmaInv_s = SigmaInv %*% diag_s
   mu_ko = X - sweep(X, 2, mu, "-") %*% SigmaInv_s
   Sigma_ko = 2 * diag_s - diag_s %*% SigmaInv_s
   R = chol(Sigma_ko)
-  X_ko = mu_ko + matrix(rnorm(ncol(X) * nrow(X)), nrow(X)) %*% R
-  if( match.arg(output_type) == "knockoffs_compact" ){
-    stop("This function cannot produce a compact representation.")
+  # For simulation studies, make multiple realizations without redoing all the computation
+  if(num_realizations > 1){
+    X_ko = list()
+    for(i in seq(num_realizations)){
+      X_ko[[i]] = mu_ko + matrix(rnorm(ncol(X) * nrow(X)), nrow(X)) %*% R
+    }
+  } else {
+    X_ko = mu_ko + matrix(rnorm(ncol(X) * nrow(X)), nrow(X)) %*% R
   }
   switch(
     match.arg(output_type),
@@ -176,80 +197,117 @@ generateLooks = function(
     output_type = "parameters"
   )
 
-  # Do the rest of the work via rank-1 updates.
+  # Prepare to do the rest of the work via rank-1 updates.
+  # I used drop=F to make sure I don't do an inner product when an outer product is needed.
   get_compact_updates = function(k){
+    if(length(k)!=1){
+      stop("Current implementation can only omit one variable at a time, sorry.\n")
+    }
     g = precomputed_quantities$SigmaInv[+k, -k, drop = F]
     h = precomputed_quantities$SigmaInv[+k, +k]
     sqrt_h = sqrt(h)
     list(
-      # Mean of P(ko | X) -- line 3 in derivation
-      mean_update1_left = X[,+k, drop = F] + X[,-k, drop = F] %*% t(g/h),
-      mean_update1_right = g %*% precomputed_quantities$S[-k,-k, drop = F],
-      # These extra terms are used only for grouped variables (when S is not diagonal)
-      mean_update2_left = -( X[,-k] %*% t(g) + X[,+k]*h ),
-      mean_update2_right = precomputed_quantities$S[+k,-k, drop = F],
-      # Sqrt of cov(ko | X) -- lines 8,18 in derivation
+      # E(ko[,-k] | X[,-k]) - E(ko[,-k] | X) -- line 14 in derivation
+      mean_update1_left =  X[,-k] %*% t(g) / h + X[,k, drop = F],
+      mean_update1_right = g %*% precomputed_quantities$S[-k,-k] + h*precomputed_quantities$S[k, -k, drop = F],
+      # This is a holdover from an earlier derivation, and I intend to delete it.
+      mean_update2_left = matrix(0, nrow = nrow(X), ncol = 1),
+      mean_update2_right = matrix(0, nrow = 1, ncol = ncol(X) - 1),
+
+      # Sqrt of cov(ko[,-k] | X[,-k]) - cov(ko[,-k] | X)  -- line 24 in derivation
       sqrt_cov_update =
         (g/sqrt_h) %*% precomputed_quantities$S[-k, -k, drop = F] + # always used
-        sqrt_h * precomputed_quantities$S[+k, -k, drop = F] # 0 if S diagonal (no grouping)
+        sqrt_h * precomputed_quantities$S[+k, -k, drop = F], # 0 if S diagonal (no grouping)
+      # Derivation relies on
+      #
+      #    cov(X + RZ) = cov(X) + RR^T
+      #
+      # where Z is IID standard normal.
+      # It helps to have 'Z' stored with the fixed updates, not generated de novo upon each use, so that
+      # the exact same knockoffs are always re-assembled.
+      random = matrix( rnorm( nrow( X ) ), ncol = 1 )
     )
   }
-  all_updates = lapply(vars_to_omit, get_compact_updates)
-
+  updates = lapply(vars_to_omit, get_compact_updates)
   # Send'em out on the cheap if possible
-  if ( match.arg(output_type) == "pearson"){
+  output_type = match.arg(output_type)
+  if ( output_type == "pearson"){
     stop("Sorry, this is not implemented yet.")
-  }
-  if ( match.arg(output_type) == "knockoffs_compact"){
+  } else if ( output_type == "knockoffs_compact" ){
     return(
       list(
         knockoffs = precomputed_quantities$knockoffs,
-        updates = all_updates
+        updates = updates,
+        groups = groups,
+        vars_to_omit = vars_to_omit
       )
     )
-  }
-
-  # Otherwise, return nicer but more expensive stuff as requested
-  assemble_output = function(k){
-    ko = updateKnockoffs(precomputed_quantities$knockoffs, all_updates[[which(k==vars_to_omit)]], k)
-    if(output_type == "knockoffs"){
-      return( ko )
-    } else if(output_type == "statistics"){
-      if(is.null(statistic)){
-        stop("'statistic' must be provided if output_type = 'statistics'. Consult options from the 'knockoff' package.")
-      }
-      return( statistic(X[,-k], ko, y = X[,k], ...) )
-    } else if ( output_type == "parameters"){
-      updates = all_updates[[which(vars_to_omit==k)]]
-      return(
-        list(
-          ko_mean                 = precomputed_quantities$ko_mean[           ,-k] + getMeanUpdate( updates ),
-          ko_covariance = crossprod(precomputed_quantities$ko_sqrt_covariance[,-k]) + getCovarianceUpdate( updates ),
-          ko_mean_naive           = precomputed_quantities$ko_mean[           ,-k],
-          ko_cov_naive  = crossprod(precomputed_quantities$ko_sqrt_covariance[,-k]),
-          S        = precomputed_quantities$S,
-          SigmaInv = precomputed_quantities$SigmaInv
-        )
-      )
+  } else if ( output_type == "parameters"){
+    return( lapply(vars_to_omit, function(k) formLookParameters(precomputed_quantities, vars_to_omit, updates, k) ) )
+  } else if(output_type == "knockoffs"){
+    return( formAllLooks(precomputed_quantities$knockoffs, vars_to_omit, updates) )
+  } else if(output_type == "statistics"){
+    if( is.null( statistic ) ){
+      stop("'statistic' must be provided if output_type = 'statistics'. Consult options from the 'knockoff' package.")
     }
+    return( formAllLooks(precomputed_quantities$knockoffs, vars_to_omit, updates, statistic) )
   }
-  return( lapply( vars_to_omit, assemble_output ) )
 }
 
-#' Given the low-rank updates from generateLooks, update knockoffs to omit variable k.
+#' Extract one update from the low-rank representation, while handling a tricky case properly.
 #'
-#' @param knockoffs Knockoffs computed with variable k included.
+getUpdateK = function(k, vars_to_omit, updates){
+  correct_index = which(k==vars_to_omit) # Handle case when vars_to_omit is not 1, 2, ... P
+  updates[[correct_index]]
+}
+
+#' Given the low-rank representations, update knockoffs to omit each variable.
+#'
 #' @param k variable to omit.
-#' @param updates updates from generateLooks with output_type = "knockoffs_compact"
+#' @param statistic Optional but useful for memory efficiency: instead of returning all knockoffs, compute statistics using this function, and return those instead.
+#' @param updates @param knockoffs @param vars_to_omit
+#' Inputs should be from \code{loadCompactLooks} or from \code{generateLooks(..., output_type = 'knockoffs_compact'}.)
+#' Those functions return a list with the same names as the necessary args.
 #' @export
-updateKnockoffs = function(knockoffs, updates, k){
-  with(updates,
+#'
+formAllLooks = function(knockoffs, vars_to_omit, updates, statistic = NULL){
+  if(is.null(statistic)){
+    return( lapply( vars_to_omit, function(k) formOneLook(knockoffs, vars_to_omit, updates, k) ) )
+  } else {
+    return( lapply( vars_to_omit, function(k) statistic( X[,-k], formOneLook(precomputed_quantities$knockoffs, vars_to_omit, updates, k), y = X[,k], ... ) ) )
+  }
+}
+
+#' Given the low-rank representations, update knockoffs to omit one variable.
+#'
+#' @param k variable to omit.
+#' @param updates @param knockoffs @param vars_to_omit
+#' Inputs should be from \code{loadCompactLooks} or from \code{generateLooks(..., output_type = 'knockoffs_compact'}.)
+#' Those functions return a list with the same names as the necessary args.
+#' @export
+#'
+formOneLook = function(knockoffs, vars_to_omit, updates, k){
+  one_update = getUpdateK(k, vars_to_omit, updates)
+  with(one_update,
        knockoffs[,-k] +
-         getMeanUpdate(updates) +
-         getRandomUpdate(updates, n_obs = nrow(knockoffs))
+         getMeanUpdate(one_update) +
+         getRandomUpdate(one_update, n_obs = nrow(knockoffs))
   )
 }
 
+#' Return mean and covariance used to sample a look. This is only used for checking the math.
+#'
+formLookParameters = function(precomputed_quantities,  vars_to_omit, updates, k){
+  one_update = getUpdateK(k, vars_to_omit, updates)
+  list(
+    ko_mean                 = precomputed_quantities$ko_mean[           ,-k] + getMeanUpdate( one_update ),
+    ko_covariance = crossprod(precomputed_quantities$ko_sqrt_covariance[,-k]) + getCovarianceUpdate( one_update ),
+    ko_mean_naive           = precomputed_quantities$ko_mean[           ,-k],
+    ko_cov_naive  = crossprod(precomputed_quantities$ko_sqrt_covariance[,-k]),
+    S        = precomputed_quantities$S[-k,-k],
+    SigmaInv = precomputed_quantities$SigmaInv[-k,-k]
+  )
+}
 
 #' Output can be added to knockoffs (or their covariance) to correct for removal of a variable.
 #'
@@ -260,8 +318,10 @@ getMeanUpdate = function(updates){
   )
 }
 getRandomUpdate = function(updates, n_obs){
-  matrix( rnorm( n_obs ), ncol = 1 ) %*% (updates$sqrt_cov_update)
+  updates$random %*% updates$sqrt_cov_update
 }
+
+# Used only for checking the math -- not needed for knockoff generation
 getCovarianceUpdate = function(updates){
   crossprod(updates$sqrt_cov_update)
 }

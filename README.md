@@ -1,6 +1,6 @@
 ## Leave-one-out knockoffs for efficient structure learning in R
 
-The framework of *Model-X knockoffs* and the corresponding R package `knockoff` together provide FDR control for subset selection in sparse regression models with multivariate Gaussian covariates (1). Model-X knockoffs have also been applied for structure learning via graphical lasso (2) by leaving out each variable in turn, and they have been extended to enable testing of composite hypotheses (3,4,5). To facilitate progress in applications, especially in causal modeling of transcription, this R package provides efficient free software for leave-one-out knockoff generation with both simple and composite null hypotheses.
+The framework of *Model-X knockoffs* and the corresponding R package `knockoff` together provide FDR control for subset selection in sparse regression models with multivariate Gaussian covariates (1). Model-X knockoffs have also been applied for structure learning via graphical lasso (2) by leaving out each variable in turn, and they have been extended to enable testing of composite hypotheses (3,4,5). To facilitate progress in applications, especially in causal modeling of transcription, this package provides efficient free software for leave-one-out knockoff generation with both simple and composite null hypotheses.
 
 Accompanying vignettes, installation instructions, and mathematical derivations are a work in progress.
 
