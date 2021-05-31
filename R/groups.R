@@ -8,7 +8,7 @@ checkGroups = function(X, groups){
   }
 }
 
-#' Remove one variable from a list of groups, shifting everything down.
+#' Remove one variable from a list of groups, then shift everything down.
 #'
 removeKFromGroups = function( groups, k ){
   if(length(groups)==0){
@@ -67,7 +67,7 @@ solveGroupEqui = function(Sigma, groups, do_fast = T){
     }
     eigenstuff$vectors %*% safe_diag(eigenstuff$values ^ power) %*% t(eigenstuff$vectors)
   }
-  # Test of sqrt inv closure
+  # Test of sqrt inv
   # M = matrix(rnorm(160), ncol = 4)
   # M = t(M) %*% M
   # round(sqrt_inv(M, power = -1) %*% M)
@@ -79,13 +79,7 @@ solveGroupEqui = function(Sigma, groups, do_fast = T){
   }
   M = D %*% Sigma %*% D
   trace_M = sum(Matrix::diag(M))
-  if(do_fast){
-    # Get the smallest eigenvalue of M in a hopefully fast and non-horrible way
-    # Via largest eigenvalue of tr(M)*I - M.
-    min_eigenvalue = trace_M - irlba::partial_eigen(n = 1, trace_M * diag(nrow(M)) - M, symmetric = T )$values
-  } else {
-    min_eigenvalue = min(eigen(M)$values)
-  }
-  S = min(min_eigenvalue, 1)*S
+  min_eigenvalue = RSpectra::eigs_sym(M, 1, which = "SA", opts = list(retvec = FALSE, maxitr = 1e+05, tol = 1e-08))$values
+  S = min(2*min_eigenvalue, 1)*S
   return(as.matrix(S))
 }

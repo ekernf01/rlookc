@@ -29,18 +29,19 @@ for(do_grouping in c(T, F)){
     s_method = "sdp"
     reference_knockoff_maker = function(groups, ...) knockoff::create.gaussian(...)
   }
+  params_naive = rlookc::computeGaussianKnockoffs(Z, mu = 0, Sigma = Sigma,
+                                                  output_type = "parameters",
+                                                  groups = example_groups,
+                                                  method = s_method)
+  # For matching results, need to use the same S matrix for lookc and reference.
+  # So don't let the reference code recompute it every time.
+  same_s =  params_naive$S
+
   # First test theoretical quantities
   # This is not the best software test because the covariance is not used directly.
   # But it's a good check on the derivation.
   test_that("mean and covariance match in theory" %>% label_whether_grouped, {
-    params_naive = rlookc::computeGaussianKnockoffs(Z, mu = 0, Sigma = Sigma,
-                                                    output_type = "parameters",
-                                                    groups = example_groups,
-                                                    method = s_method)
-    # For matching results, need to use the same S matrix for lookc and reference.
-    # So don't let the reference code recompute it every time.
-    same_s =  params_naive$S
-    params_lookc = rlookc::generateLooks(           Z,
+   params_lookc = rlookc::generateLooks(           Z,
                                                     mu = 0,
                                                     Sigma = Sigma,
                                                     vars_to_omit = 1,
