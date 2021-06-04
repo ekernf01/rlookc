@@ -123,7 +123,7 @@ generateLooksSlow = function(
                                   output_type = output_type,
                                   diag_s = diag_s[-k,-k])
     if(output_type=="pearson"){
-      return(marginal_screen(X[,-k], ko, y = X[,k], ...))
+      return(marginalScreen(X[,-k], ko, y = X[,k], ...))
     } else if(output_type=="statistics"){
       if(is.null(statistic)){
         stop("'statistic' must be provided if output_type = 'statistics'. Consult options from the 'knockoff' package.")

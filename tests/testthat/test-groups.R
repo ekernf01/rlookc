@@ -48,26 +48,26 @@ testthat::test_that("Joint cov of X and knockoffs is SPD", {
 # Test if group-level FDR is honest
 # Also, does it beat the singly-generated knockoffs in power?
 testthat::test_that("Group selection controls the FDR", {
-  num_knockoffs = 500
+  num_knockoffs = 100
   X_ko_eachone  = lapply(1:num_knockoffs, function(i) knockoff::create.gaussian(X = hard_example$X, mu = 0, Sigma = hard_example$Sigma, method = "equi"))
   X_ko_grouped  = computeGaussianKnockoffs(X = hard_example$X, mu = 0, Sigma = hard_example$Sigma, num_realizations = num_knockoffs,
                                            groups = hard_example$groups, method = "group") %>% as.matrix
   for(signal in c("concentrated", "spread_out")){
-    num_y = 500
+    num_y = 100
     hard_example$active_group_idx    = sample(seq_along(hard_example$groups), replace = T, size = num_y)
     hard_example$active_variable_idx = hard_example$active_group_idx %>% lapply(function(g) hard_example$groups[[g]] )
     if(signal=="concentrated"){
       hard_example$active_variable_idx %<>% lapply(extract2, 1)
     }
     hard_example$y = lapply(hard_example$active_variable_idx, function(s) rowMeans(hard_example$X[,s, drop = F]) + 0.1*rnorm(num_obs))
-    stats_eachone = sapply( seq(num_y), function( i ) marginal_screen( X = hard_example$X, X_k = X_ko_eachone[[i%%num_knockoffs + 1]], y = hard_example$y[[i]] ) ) %>% t
-    stats_grouped = sapply( seq(num_y), function( i ) marginal_screen( X = hard_example$X, X_k = X_ko_grouped[[i%%num_knockoffs + 1]], y = hard_example$y[[i]] ) ) %>% t %>%
+    stats_eachone = sapply( seq(num_y), function( i ) marginalScreen( X = hard_example$X, X_k = X_ko_eachone[[i%%num_knockoffs + 1]], y = hard_example$y[[i]] ) ) %>% t
+    stats_grouped = sapply( seq(num_y), function( i ) marginalScreen( X = hard_example$X, X_k = X_ko_grouped[[i%%num_knockoffs + 1]], y = hard_example$y[[i]] ) ) %>% t %>%
       aggregateStats(hard_example$groups)
     dir.create("~/Desktop/jhu/research/projects/rlookc/tests/grouping", recursive = T, showWarnings = F)
-    calibration_eachone = check.calibration(ground_truth = hard_example$active_variable_idx,
+    calibration_eachone = checkCalibration(ground_truth = hard_example$active_variable_idx,
                                             W = stats_eachone,
                                             plot_savepath = "~/Desktop/jhu/research/projects/rlookc/tests/grouping/individual_calibration.pdf")
-    calibration_grouped = check.calibration(ground_truth = hard_example$active_group_idx,
+    calibration_grouped = checkCalibration(ground_truth = hard_example$active_group_idx,
                                             W = stats_grouped,
                                             plot_savepath = "~/Desktop/jhu/research/projects/rlookc/tests/grouping/grouped_calibration.pdf")
     # power comparison

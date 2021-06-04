@@ -25,6 +25,7 @@ test_that("shit runs", {
 
 
 # Example where knockoffs look really different without v1 -- good for testing, easy to spot screwups
+set.seed(0)
 Z = matrix(NA, ncol = 10, nrow = 100)
 Z[,1] = rnorm(1e2)
 for(k in 2:10){
