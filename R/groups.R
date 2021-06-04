@@ -1,5 +1,7 @@
 #' Make sure variable groups match data matrix (or any other matrix with one variable per column)
 #'
+#' @export
+#'
 checkGroups = function(X, groups){
   vars_expected = seq( ncol( X ) )
   vars_in_groups = sort( Reduce( c, groups ) )
@@ -26,6 +28,8 @@ removeKFromGroups = function( groups, k ){
 
 
 #' Given one knockoff test stat per variable, return one per group.
+#'
+#' @export
 #'
 aggregateStats = function(stats, groups, FUN = mean){
   if(is.null(dim(stats))){
@@ -82,5 +86,6 @@ solveGroupEqui = function(Sigma, groups, do_fast = T){
   trace_M = sum(Matrix::diag(M))
   min_eigenvalue = RSpectra::eigs_sym(M, 1, which = "SA", opts = list(retvec = FALSE, maxitr = 1e+05, tol = 1e-08))$values
   S = min(2*min_eigenvalue, 1)*S
+  S = S*0.99 # Make sure it's not too close to a 0 eignvalue
   return(as.matrix(S))
 }
