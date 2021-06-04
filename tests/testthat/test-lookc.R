@@ -4,7 +4,7 @@ library("Matrix")
 # Tests related to leave-one-out knockoff construction.
 # First, a simple, realistic test resembling BEELINE usage.
 # - with rownames
-# - with p > n
+# - TODO: try with p > n
 # - using statistics as output
 test_that("shit runs", {
   inputExpr = matrix(rnorm(1e3), nrow = 10, ncol = 100)
