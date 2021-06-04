@@ -2,10 +2,10 @@
 % Please edit documentation in R/groups.R
 \name{removeKFromGroups}
 \alias{removeKFromGroups}
-\title{Remove one variable from a list of groups, shifting everything down.}
+\title{Remove one variable from a list of groups, then shift everything down.}
 \usage{
 removeKFromGroups(groups, k)
 }
 \description{
-Remove one variable from a list of groups, shifting everything down.
+Remove one variable from a list of groups, then shift everything down.
 }

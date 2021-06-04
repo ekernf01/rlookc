@@ -4,7 +4,7 @@
 \alias{formAllLooks}
 \title{Given the low-rank representations, update knockoffs to omit each variable.}
 \usage{
-formAllLooks(knockoffs, vars_to_omit, updates, statistic = NULL)
+formAllLooks(knockoffs, vars_to_omit, updates, statistic = NULL, X = NULL, ...)
 }
 \arguments{
 \item{updates}{@param knockoffs @param vars_to_omit

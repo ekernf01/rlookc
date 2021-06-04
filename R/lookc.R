@@ -1,5 +1,4 @@
 
-
 #' Compute S, mean, covariance, and realizations of Gaussian knockoffs.
 #'
 #' This function is copied and lightly modified from the function \code{create.gaussian}
@@ -28,7 +27,8 @@ computeGaussianKnockoffs = function (
   num_realizations = 1
 ){
   # Make sure data are scaled to have unit variance
-  stopifnot( "input must be scaled to have unit variance"=isTRUE( all.equal( diag( Sigma ), rep( 1, ncol( Sigma ) ) ) ) )
+  stopifnot( "input must be scaled to have unit variance"=isTRUE( all.equal( setNames( diag( Sigma ), NULL),
+                                                                             rep( 1, ncol( Sigma ) ) ) ) )
   # Input checking for S solver (Same as Sesia's code)
   method = match.arg(method)
   if ((nrow(Sigma) <= 500) && method == "asdp") {
@@ -66,7 +66,7 @@ computeGaussianKnockoffs = function (
   if( is.vector( diag_s ) ){
     diag_s = diag( diag_s, length( diag_s ) )
   }
-  diag_s %<>% as.matrix()
+  diag_s = as.matrix(diag_s)
   if( all( diag_s == 0 ) ) {
     warning( "The conditional knockoff covariance matrix is not positive definite. Knockoffs will have no power." )
     return( X )
@@ -94,13 +94,6 @@ computeGaussianKnockoffs = function (
     parameters = list(ko_mean = mu_ko, ko_sqrt_covariance = R, S = diag_s, SigmaInv = SigmaInv, knockoffs = X_ko)
   )
 }
-
-#' Helper function for simple marginal screening via the pearson correlation.
-#'
-do_pearson_screen = function(X, ko, y){
-  rbind(as.vector(cor(X, y)), as.vector(cor(ko, y))) %>% set_rownames(c("X", "knockoff"))
-}
-
 
 #' Generate leave-one-out knockoffs for each variable in X slowly and simply. Suitable for small problems or software tests.
 #'
@@ -130,7 +123,7 @@ generateLooksSlow = function(
                                   output_type = output_type,
                                   diag_s = diag_s[-k,-k])
     if(output_type=="pearson"){
-      return(do_pearson_screen(X[,-k], ko, y = X[,k], ...))
+      return(marginal_screen(X[,-k], ko, y = X[,k], ...))
     } else if(output_type=="statistics"){
       if(is.null(statistic)){
         stop("'statistic' must be provided if output_type = 'statistics'. Consult options from the 'knockoff' package.")
@@ -182,11 +175,19 @@ generateLooks = function(
   output_type = c("knockoffs", "knockoffs_compact", "statistics", "parameters", "pearson"),
   ...
 ){
+  # Check and clean up input
   if(length(mu)==1){
     mu = rep(mu, ncol(X))
   }
   if(is.vector(diag_s)){
     diag_s = diag(diag_s)
+  }
+  output_type = match.arg(output_type)
+  if( output_type!="statistics"){
+    if( !is.null( statistic ) ){
+      warning("statistic arg was specified, but it will be ignored because
+              output_type is not 'statistics'.")
+    }
   }
   # This calls a modification of Matteo Sesia's code that reveals some internals for downstream use.
   precomputed_quantities = computeGaussianKnockoffs(
@@ -228,7 +229,6 @@ generateLooks = function(
   }
   updates = lapply(vars_to_omit, get_compact_updates)
   # Send'em out on the cheap if possible
-  output_type = match.arg(output_type)
   if ( output_type == "pearson"){
     stop("Sorry, this is not implemented yet.")
   } else if ( output_type == "knockoffs_compact" ){
@@ -248,7 +248,7 @@ generateLooks = function(
     if( is.null( statistic ) ){
       stop("'statistic' must be provided if output_type = 'statistics'. Consult options from the 'knockoff' package.")
     }
-    return( formAllLooks(precomputed_quantities$knockoffs, vars_to_omit, updates, statistic) )
+    return( formAllLooks(precomputed_quantities$knockoffs, vars_to_omit, updates, statistic, X, ...) )
   }
 }
 
@@ -268,11 +268,12 @@ getUpdateK = function(k, vars_to_omit, updates){
 #' Those functions return a list with the same names as the necessary args.
 #' @export
 #'
-formAllLooks = function(knockoffs, vars_to_omit, updates, statistic = NULL){
+formAllLooks = function(knockoffs, vars_to_omit, updates, statistic = NULL, X = NULL, ...){
   if(is.null(statistic)){
     return( lapply( vars_to_omit, function(k) formOneLook(knockoffs, vars_to_omit, updates, k) ) )
   } else {
-    return( lapply( vars_to_omit, function(k) statistic( X[,-k], formOneLook(precomputed_quantities$knockoffs, vars_to_omit, updates, k), y = X[,k], ... ) ) )
+    stopifnot("Pass original data to formAllLooks if you want test statistics as output.\n"=!is.null(X))
+    return( lapply( vars_to_omit, function(k) statistic( X[,-k], formOneLook(knockoffs, vars_to_omit, updates, k), y = X[,k], ... ) ) )
   }
 }
 

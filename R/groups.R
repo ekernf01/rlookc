@@ -48,6 +48,7 @@ aggregateStats = function(stats, groups, FUN = mean){
 #' See equation 11 and material immediately following it.
 #'
 solveGroupEqui = function(Sigma, groups, do_fast = T){
+  stopifnot(isSymmetric(Sigma))
   D = S = Matrix::Matrix(0, nrow = nrow(Sigma), ncol = ncol(Sigma))
   safe_diag = function(x) {
     stopifnot(is.vector(x))

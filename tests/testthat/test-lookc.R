@@ -2,6 +2,27 @@ library("magrittr")
 library("Matrix")
 
 # Tests related to leave-one-out knockoff construction.
+# First, a simple, realistic test resembling BEELINE usage.
+# - with rownames
+# - with p > n
+# - using statistics as output
+test_that("shit runs", {
+  inputExpr = matrix(rnorm(1e3), nrow = 10, ncol = 100)
+  rownames(inputExpr) = LETTERS[1:10]
+  geneNames <- rownames(inputExpr)
+  rownames(inputExpr) <- c(geneNames)
+  testthat::expect_silent({
+    knockoffResults = rlookc::generateLooks(
+      t(inputExpr),
+      mu = 0,
+      Sigma = cor(t(inputExpr)),
+      statistic = knockoff::stat.lasso_lambdasmax,
+      output_type = "statistics"
+    )
+  })
+})
+
+
 
 # Example where knockoffs look really different without v1 -- good for testing, easy to spot screwups
 Z = matrix(NA, ncol = 10, nrow = 100)

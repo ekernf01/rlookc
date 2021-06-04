@@ -52,7 +52,7 @@ knockoff.qvals = function (W, offset = 1) {
   ratio = sapply(ts, function(t) (offset + sum(W <= -t))/max(1, sum(W >= t)))
   # This step is quadratic in length(W) and could probably be done faster if needed
   for(k in seq_along(W)){
-    q[[k]] = min(ratio[W[[k]]>ts] %>% c(1))
+    q[[k]] = min(c(ratio[W[[k]]>ts], 1))
   }
   q
 }
