@@ -183,12 +183,6 @@ generateLooks = function(
     diag_s = diag(diag_s)
   }
   output_type = match.arg(output_type)
-  if( output_type!="statistics"){
-    if( !is.null( statistic ) ){
-      warning("statistic arg was specified, but it will be ignored because
-              output_type is not 'statistics'.")
-    }
-  }
   # This calls a modification of Matteo Sesia's code that reveals some internals for downstream use.
   precomputed_quantities = computeGaussianKnockoffs(
     X = X,
