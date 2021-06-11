@@ -1,7 +1,9 @@
 #' Given X, simulate Y|X and check calibration.
 #'
 #' @export
-#' @param X @param knockoffs A real dataset and a corresponding model-X knockoff realization
+#' @param X @param knockoffs A real dataset and a corresponding model-X knockoff realization.
+#' To average out over multiple knockoff realizations, pass in a list of matrices. Any number is fine
+#' if your computer can handle it; the code will cycle through if it's less than n_sim.
 #' @param statistic Function used to compute variable importance, e.g. knockoff::stat.glmnet_lambdasmax.
 #' @param ... Passed to statistic, e.g. n_lambda=100.
 #' @param groups Groups for composite hypothesis testing.
@@ -20,22 +22,26 @@ simulateY = function(X,
                      FUN = function(x) mean(x) + 0.1*rnorm(1),
                      plot_savepath = NULL,
                      ... ){
-
-    active_group_idx    =
-      replicate(n = n_sim,
-                simplify = F,
-                sample(seq_along(groups), replace = F, size = active_set_size)
-      )
-    active_variable_idx = active_group_idx %>% lapply(function(g) Reduce(union, groups[g]) )
-    y = lapply(active_variable_idx, function(s) apply(X[,s, drop = F], 1, FUN))
-    W =
-      sapply( seq(n_sim), function( i ) statistic( X = X, X_k = knockoffs, y = y[[i]], ... ) ) %>%
-      t %>%
-      aggregateStats(groups)
-    calibration_grouped = checkCalibration(ground_truth = active_group_idx,
-                                            W = W,
-                                            plot_savepath = plot_savepath)
-    return(list(groups = groups, ground_truth = active_group_idx, stats = W, calibration = calibration_grouped))
+  if(!is.list(knockoffs)){
+    knockoffs = list(knockoffs)
+  }
+  stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = dim(knockoffs[[1                ]])==dim(X))
+  stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = dim(knockoffs[[length(knockoffs)]])==dim(X))
+  active_group_idx    =
+    replicate(n = n_sim,
+              simplify = F,
+              sample(seq_along(groups), replace = F, size = active_set_size)
+    )
+  active_variable_idx = active_group_idx %>% lapply(function(g) Reduce(union, groups[g]) )
+  y = lapply(active_variable_idx, function(s) apply(X[,s, drop = F], 1, FUN))
+  W =
+    sapply( seq(n_sim), function( i ) statistic( X = X, X_k = knockoffs[[1 + magrittr::mod(i, length(knockoffs))]], y = y[[i]], ... ) ) %>%
+    t %>%
+    aggregateStats(groups)
+  calibration_grouped = checkCalibration(ground_truth = active_group_idx,
+                                         W = W,
+                                         plot_savepath = plot_savepath)
+  return(list(groups = groups, ground_truth = active_group_idx, stats = W, calibration = calibration_grouped))
 }
 
 #' Given a set of knockoff stats and ground-truth nonzero entries, compute
