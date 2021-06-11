@@ -17,7 +17,9 @@ simulateY(
 )
 }
 \arguments{
-\item{X}{@param knockoffs A real dataset and a corresponding model-X knockoff realization}
+\item{X}{@param knockoffs A real dataset and a corresponding model-X knockoff realization.
+To average out over multiple knockoff realizations, pass in a list of matrices. Any number is fine
+if your computer can handle it; the code will cycle through if it's less than n_sim.}
 
 \item{statistic}{Function used to compute variable importance, e.g. knockoff::stat.glmnet_lambdasmax.}
 

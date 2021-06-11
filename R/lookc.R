@@ -10,11 +10,12 @@
 #' as results are poorly labeled.
 #' This was done in order to make the interface similar to generateLooks
 #' while still providing the correct functionality for internal use.
-#' Users should prefer generateLooks or Matteo Sesia's \code{knockoff::create.gaussian}.
+#' Users should typically prefer generateLooks or Matteo Sesia's \code{knockoff::create.gaussian}.
 #'
 #' @param X @param mu  @param sigma  @param method @param groups  @param diag_s  @param output_type See \code{?generateLooks}.
 #' @param num_realizations Since the knockoff procedure is random, it can be useful to generate many instances,
 #' for instance in simulation studies. If >1, this returns a list of multiple realizations.
+#' @export
 #'
 computeGaussianKnockoffs = function (
   X,

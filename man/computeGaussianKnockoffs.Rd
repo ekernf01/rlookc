@@ -32,5 +32,5 @@ Public use is not recommended when "output_type" is anything but "knockoffs",
 as results are poorly labeled.
 This was done in order to make the interface similar to generateLooks
 while still providing the correct functionality for internal use.
-Users should prefer generateLooks or Matteo Sesia's \code{knockoff::create.gaussian}.
+Users should typically prefer generateLooks or Matteo Sesia's \code{knockoff::create.gaussian}.
 }
