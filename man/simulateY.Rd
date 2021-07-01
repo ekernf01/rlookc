@@ -9,10 +9,12 @@ simulateY(
   knockoffs,
   statistic = marginalScreen,
   groups = seq(ncol(X)),
-  active_set_size = 5,
+  active_set_size = 1,
   n_sim = 500,
-  FUN = function(x) mean(x) + 0.1 * rnorm(1),
+  FUN = function(x) x > 0,
   plot_savepath = NULL,
+  shuddup = F,
+  kmeans_centers = kmeans_centers,
   ...
 )
 }
@@ -29,9 +31,13 @@ if your computer can handle it; the code will cycle through if it's less than n_
 
 \item{n_sim}{How many simulations to perform.}
 
-\item{FUN}{How to simulate Y given some x's, e.g. function(x) all(x>0) + rnorm(1)}
+\item{FUN}{How to simulate Y given some x's, e.g. function(x) all(x>0) + rnorm(1).
+Pass the string "adversarial" or "diverse" for custom options designed to reveal
+hidden harms of heteroskedasticity and other unexpected pitfalls.}
 
 \item{plot_savepath}{Passed to check.calibration}
+
+\item{kmeans_centers}{passed to chooseAdversarialY}
 
 \item{...}{Passed to statistic, e.g. n_lambda=100.}
 }
