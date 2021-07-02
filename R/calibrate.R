@@ -53,7 +53,7 @@ chooseAdversarialY = function(X, kmeans_centers ){
     output[k, "cutoff"] =
       X[low_variance_indicator, output[k, "active_variable"]] %>%
       quantile(0.5 - direction_of_association*0.4)
-    y[[k]] = X[,output[k, "active_variable"]] > output[k, "cutoff"]
+    y[[k]] = as.numeric(X[,output[k, "active_variable"]] > output[k, "cutoff"])
   }
   return(list(metadata = output, y = y))
 }
@@ -70,6 +70,7 @@ chooseAdversarialY = function(X, kmeans_centers ){
 #' @param active_set_size how many grups to include in the active set for each simulation.
 #' @param n_sim How many simulations to perform.
 #' @param FUN How to simulate Y given some x's, e.g. function(x) all(x>0) + rnorm(1).
+#' Should produce numeric output (not logical, even if you use a step function).
 #' Pass the string "adversarial" or "diverse" for custom options designed to reveal
 #' hidden harms of heteroskedasticity and other unexpected pitfalls.
 #' @param kmeans_centers passed to chooseAdversarialY
@@ -79,11 +80,11 @@ chooseAdversarialY = function(X, kmeans_centers ){
 #'
 simulateY = function(X,
                      knockoffs,
-                     statistic = marginalScreen,
+                     statistic = knockoff::stat.glmnet_lambdasmax,
                      groups = seq(ncol(X)),
                      active_set_size = 1,
                      n_sim = 500,
-                     FUN = function(x) x>0,
+                     FUN = function(x) as.numeric(x>0),
                      plot_savepath = NULL,
                      shuddup = F,
                      kmeans_centers = kmeans_centers,

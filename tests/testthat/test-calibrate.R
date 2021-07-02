@@ -21,10 +21,11 @@ test_that("Simulations run", {
 })
 
 test_that("Diagnostic catches heteroskedasticity", {
+  set.seed(0)
   # Generate heteroskedastic data
   X = rbind(
-    matrix(rnorm(1e5), ncol = 1e2),
-    matrix(rnorm(1e5), ncol = 1e2)*0.1 + 5
+    matrix(rnorm(5e4), ncol = 50),
+    matrix(rnorm(5e4), ncol = 50)*0.1 + 5
   )
   for(k in seq(ncol(X))){
     X[,k] = X[,k] - mean(X[,k])
@@ -44,9 +45,9 @@ test_that("Diagnostic catches heteroskedasticity", {
   )
   data.frame(
     targeted_fdr = calibration_regular$calibration$targeted_fdrs,
-    random = calibration_regular$calibration$fdr %>% colMeans,
+    linear = calibration_regular$calibration$fdr %>% colMeans,
     adversarial = calibration_nayusty$calibration$fdr %>% colMeans,
-    diverse = calibration_diverse$calibration$fdr %>% colMeans
+    diverse_step = calibration_diverse$calibration$fdr %>% colMeans
   ) %>%
     tidyr::pivot_longer(cols = !targeted_fdr,
                         names_to = "Scheme",

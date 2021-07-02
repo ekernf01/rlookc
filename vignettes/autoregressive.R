@@ -3,8 +3,8 @@ library("magrittr")
 library("knockoff")
 
 # This vignette tests knockoff error control in subset selection for a vector autoregressive model.
-# Since there is no clear distinction between "Y" and "X", it is unclear (to me) if knockoffs retain their guarantees.
-# I chose to investigate this via simulation.
+# Since there is no clear distinction between "Y" and "X", it is unclear (to me) if knockoffs
+# retain their guarantees. I chose to investigate this via simulation.
 
 # VAR model parameters
 n_time = 1000
@@ -36,14 +36,14 @@ for(j in seq(n_rep)){
 dir.create("tests/autoregressive", recursive = T, showWarnings = F)
 # This plot has formally correct CI's.
 # Each datum is draw from a separate trial.
-calibration_results = check.calibration(
+calibration_results = checkCalibration(
   ground_truth = active_sets[2] %>% rep(n_rep),
   W = stats %>% lapply(t) %>% sapply(extract, 2, ) %>% t,
   n_var = n_var - 1,
   plot_savepath = "tests/autoregressive/FDR control one variable.pdf"
 )
 # This plot uses all the data but CI's might be off because the knockoffs are re-used.
-calibration_results2 = check.calibration(
+calibration_results2 = checkCalibration(
   ground_truth = active_sets %>% rep(n_rep),
   W = stats %>% lapply(t) %>% lapply(as.data.frame) %>% data.table::rbindlist() %>% as.matrix(),
   plot_savepath = "tests/autoregressive/FDR control all variables.pdf"
