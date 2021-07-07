@@ -7,13 +7,16 @@
 #' Their outputs are smashed together into a matrix.
 #' @return A list with values of Y, one matrix of step functions per variable.
 #'
+#' @export
+#'
 chooseDiverseY = function(X, n_quantiles = 10 ){
   y = list()
   for(k in seq(ncol(X))){
     var_k_quantiles = quantile(X[,k], probs = (1:n_quantiles) / ( n_quantiles+1 ) )
-    y[[k]] = sapply( var_k_quantiles, function(q) { X[,k] > q } )
+    idx = (k-1)*n_quantiles + (1:n_quantiles)
+    y[idx] = lapply( var_k_quantiles, function(q) { as.numeric( X[,k] > q ) } )
   }
-  return(y)
+  return( list( y = y, ground_truth = rep( seq( ncol( X ) ), each = n_quantiles ) ) )
 }
 
 #' Pick P(Y|X) purposefully to reveal bad calibration.
@@ -30,6 +33,8 @@ chooseDiverseY = function(X, n_quantiles = 10 ){
 #' the cutoff used in the step function,
 #' and the variable likely to be found as a false positive
 #' if homoskedastic knockoffs are used.
+#'
+#' @export
 #'
 chooseAdversarialY = function(X, kmeans_centers ){
   # Cluster the dataset and look for heteroskedasticity
@@ -142,10 +147,11 @@ simulateY = function(X,
       active_set_size = 1
       # groups = seq(length.out = n_sim)
       statistic = stat.CCA
-      y = chooseDiverseY(X)
-      active_group_idx = active_variable_idx = seq_along(y)
+      diverse_y = chooseDiverseY(X)
+      y = diverse_y$y
+      active_group_idx = active_variable_idx = diverse_y$ground_truth
       if(n_sim != length(y)){
-        warning("The 'diverse' scheme for Y|X generates one y per input variable. If n_sim is different, some Y's will be recycled or ignored.\n")
+        warning("The 'diverse' scheme for Y|X generates 10 y's per input variable. If n_sim is different, some Y's will be recycled or ignored.\n")
         active_group_idx %<>% rep(length.out = n_sim) %>% as.list()
       }
     }
@@ -177,47 +183,11 @@ simulateY = function(X,
   calibration = checkCalibration(ground_truth = active_group_idx,
                                  W = W,
                                  plot_savepath = plot_savepath)
-  fdr_per_y = NULL
-  worst_y = NULL
-  worst_calibration = NULL
-  if(length(reserved_knockoffs)>0){
-    # Identify worst-case P(Y|X)
-    fdr_per_y =
-      calibration$fdr %>%
-      as.data.frame %>%
-      dplyr::mutate(y_index = y_index) %>%
-      dplyr::group_by(y_index) %>%
-      dplyr::summarise_all(.funs = mean) %>%
-      tidyr::pivot_longer(!y_index, names_to = "nominal_fdr", values_to = "empirical_fdr") %>%
-      dplyr::mutate(nominal_fdr = as.numeric(nominal_fdr))
-    worst_y = fdr_per_y %>%
-      dplyr::group_by(y_index) %>%
-      dplyr::summarise(max_miscalibration = max(empirical_fdr - nominal_fdr)) %>%
-      dplyr::arrange(desc(max_miscalibration)) %>%
-      head(1)
-    # Re-estimate miscalibration to avoid selection bias
-    do_one = function( i ) {
-      statistic( X = X,
-                 X_k = reserved_knockoffs[[i]],
-                 y = y[[worst_y$y_index]], ... )
-    }
-    worst_W =
-      sapply( seq_along(reserved_knockoffs), do_one) %>%
-      t
-    worst_calibration = checkCalibration(
-      ground_truth = worst_y$y_index %>% rep(length(reserved_knockoffs)),
-      W = worst_W,
-      plot_savepath = plot_savepath)
-  }
-
   return(list(
     groups = groups,
     ground_truth = active_group_idx,
     stats = W,
     y_index = y_index,
-    fdr_per_y = fdr_per_y,
-    worst_y = worst_y,
-    worst_calibration = worst_calibration,
     calibration = calibration,
     statistic = statistic,
     FUN = FUN,
@@ -228,55 +198,40 @@ simulateY = function(X,
 
 #' Given X and various simulated Y|X, find the worst-calibrated Y|X.
 #'
-#' @export
-#' @param X @param knockoffs A real dataset and a corresponding model-X knockoff realization.
-#' To average out over multiple knockoff realizations, pass in a list of matrices. Any number is fine
-#' if your computer can handle it. More is better since the final step is to select just a
-#' single y (the worst one) and estimate the mis-calibration for it.
+#' @param X @param X_k A real dataset and a corresponding model-X knockoff realization.
 #' @param y @param ground_truth Two lists of the same length, one containing y's that you simulated
 #' and another containing the indices of the variables in X used to simulate them.
 #' @param split to get an unbiased estimate of the calibration for the worst-calibrated P(Y|X),
-#' half the data are used for choosing it and the other half for estimating its calibration.
+#' half the data are used for choosing the worst and the other half for estimating its calibration.
 #' @param statistic Function used to compute variable importance, e.g. knockoff::stat.glmnet_lambdasmax.
 #' @param ... Passed to statistic, e.g. n_lambda=100.
 #' @param plot_savepath Passed to check.calibration
 #'
 #' @importFrom magrittr %>%
 #'
+#' @export
+#'
 findWorstY = function(X,
-                     knockoffs,
-                     split = rep(c(F, T), length.out = nrow(X)),
-                     y,
-                     ground_truth,
-                     statistic = knockoff::stat.glmnet_lambdasmax,
-                     plot_savepath = NULL,
-                     ... ){
-  # You can pass in just one set, or a bunch of knockoff realizations.
-  if(!is.list(knockoffs)){
-    knockoffs = list(knockoffs)
-  }
-  stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = dim(knockoffs[[1]])==dim(X))
-
+                      X_k,
+                      y,
+                      ground_truth,
+                      split = rep(c(F, T), length.out = nrow(X)),
+                      statistic = knockoff::stat.glmnet_lambdasmax,
+                      plot_savepath = NULL,
+                      ... ){
+  stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = dim(X_k)==dim(X))
   # Run the knockoff filter across all Y and all knockoffs.
-  W = lapply(
-    knockoffs,
-    function(X_k) {
-      sapply(
+  W = sapply(
         y,
         function(yi) {
           statistic(X[split,], X_k[split,], yi[split])
         }
-      )
-    }
-  )
-  fdr = lapply(W, function(wi) {
-    checkCalibration(ground_truth = ground_truth,
-                     W = wi,
-                     plot_savepath = plot_savepath)$fdr %>%
-      as.data.frame %>%
-      dplyr::mutate(y_index = seq_along(y))
-  }) %>%
-    data.table::rbindlist()
+      ) %>% t
+  fdr = checkCalibration(ground_truth = ground_truth,
+                         W = W,
+                         plot_savepath = plot_savepath)$fdr %>%
+    as.data.frame %>%
+    dplyr::mutate(y_index = seq_along(y))
 
   # Identify worst-case P(Y|X)
   worst_y = fdr %>%
@@ -288,16 +243,13 @@ findWorstY = function(X,
     dplyr::summarise(max_miscalibration = max(empirical_fdr - nominal_fdr)) %>%
     dplyr::arrange(desc(max_miscalibration)) %>%
     head(1)
-  # Re-estimate miscalibration to avoid selection bias
-  W = sapply(
-    knockoffs,
-    function(X_k) statistic(X[!split,], X_k[!split,], y[[worst_y$y_index]][!split])
-  ) %>% t
-  fdr = checkCalibration( ground_truth = worst_y$y_index %>% rep(length(knockoffs)),
-                          W,
-                          plot_savepath = plot_savepath)$fdr
 
-  return(list(worst_fdr = fdr, worst_y = worst_y$y_index))
+  # Re-estimate miscalibration to avoid selection bias
+  W = statistic(X[!split,], X_k[!split,], y[[worst_y$y_index]][!split]) %>% matrix(nrow = 1)
+  calibration = checkCalibration( ground_truth = list(worst_y$y_index),
+                          W,
+                          plot_savepath = plot_savepath)
+  return(list(calibration = calibration, worst_y = worst_y$y_index))
 }
 
 #' Given a set of knockoff stats and ground-truth nonzero entries, compute

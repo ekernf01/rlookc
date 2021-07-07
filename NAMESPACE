@@ -3,6 +3,8 @@
 export(aggregateStats)
 export(checkCalibration)
 export(checkGroups)
+export(chooseAdversarialY)
+export(chooseDiverseY)
 export(computeGaussianKnockoffs)
 export(findWorstY)
 export(formAllLooks)

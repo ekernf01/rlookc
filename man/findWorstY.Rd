@@ -6,26 +6,23 @@
 \usage{
 findWorstY(
   X,
-  knockoffs,
-  split = rep(c(F, T), length.out = nrow(X)),
+  X_k,
   y,
   ground_truth,
+  split = rep(c(F, T), length.out = nrow(X)),
   statistic = knockoff::stat.glmnet_lambdasmax,
   plot_savepath = NULL,
   ...
 )
 }
 \arguments{
-\item{X}{@param knockoffs A real dataset and a corresponding model-X knockoff realization.
-To average out over multiple knockoff realizations, pass in a list of matrices. Any number is fine
-if your computer can handle it. More is better since the final step is to select just a
-single y (the worst one) and estimate the mis-calibration for it.}
-
-\item{split}{to get an unbiased estimate of the calibration for the worst-calibrated P(Y|X),
-half the data are used for choosing it and the other half for estimating its calibration.}
+\item{X}{@param X_k A real dataset and a corresponding model-X knockoff realization.}
 
 \item{y}{@param ground_truth Two lists of the same length, one containing y's that you simulated
 and another containing the indices of the variables in X used to simulate them.}
+
+\item{split}{to get an unbiased estimate of the calibration for the worst-calibrated P(Y|X),
+half the data are used for choosing the worst and the other half for estimating its calibration.}
 
 \item{statistic}{Function used to compute variable importance, e.g. knockoff::stat.glmnet_lambdasmax.}
 

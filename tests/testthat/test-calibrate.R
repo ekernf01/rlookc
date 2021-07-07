@@ -13,16 +13,16 @@ test_that("q-values match reference", {
 
 test_that("Simulations run", {
   expect_silent({
-    calibration = simulateY(X = matrix(rnorm(10000), ncol = 50),
-                            knockoffs = replicate(50, matrix(rnorm(10000), ncol = 50), simplify = F),
+    calibration = simulateY(X = matrix(rnorm(1000), ncol = 20),
+                            knockoffs = replicate(5, matrix(rnorm(1000), ncol = 20), simplify = F),
                             n_sim = 50,
                             shuddup = T)
   })
-  X = matrix(rnorm(10000), ncol = 50)
+  X = matrix(rnorm(1000), ncol = 20)
   expect_silent({
     calibration = findWorstY(
       X,
-      knockoffs = replicate(10, matrix(rnorm(10000), ncol = 50), simplify = F),
+      X_k = matrix(rnorm(1000), ncol = 20),
       y = lapply( seq(ncol(X)), function(k) X[,k] ),
       ground_truth = seq(ncol(X))
     )
@@ -40,31 +40,43 @@ test_that("Diagnostic catches heteroskedasticity", {
     X[,k] = X[,k] - mean(X[,k])
     X[,k] = X[,k] / sd(X[,k])
   }
-  knockoffs = rlookc::computeGaussianKnockoffs(X, mu = 0, Sigma = cor(X), num_realizations = 24)
-  reserved_knockoffs = knockoffs[1:5]
-  knockoffs = knockoffs[-(1:5)]
-  calibration_regular = rlookc::simulateY(X, knockoffs, reserved_knockoffs, FUN = function(x) x)
-  calibration_nayusty = rlookc::simulateY(X, knockoffs, reserved_knockoffs, FUN = "adversarial", kmeans_centers = 2)
-  calibration_diverse = rlookc::simulateY(X, knockoffs, reserved_knockoffs, FUN = "diverse")
-  expect_lt(
-    calibration_regular$calibration$fdr %>% colMeans %>% sum,
-    calibration_nayusty$calibration$fdr %>% colMeans %>% sum
+  X_k = rlookc::computeGaussianKnockoffs(X, mu = 0, Sigma = cor(X))
+  diverse_y = chooseDiverseY(X)
+  worst_y_calibration = findWorstY(
+    X,
+    X_k,
+    y = diverse_y$y,
+    ground_truth = diverse_y$ground_truth
   )
-  expect_lt(
-    calibration_regular$calibration$fdr %>% colMeans %>% sum,
-    calibration_diverse$calibration$fdr %>% colMeans %>% sum
-  )
-  data.frame(
-    targeted_fdr = calibration_regular$calibration$targeted_fdrs,
-    linear = calibration_regular$calibration$fdr %>% colMeans,
-    adversarial = calibration_nayusty$calibration$fdr %>% colMeans,
-    diverse_step = calibration_diverse$calibration$fdr %>% colMeans
-  ) %>%
-    tidyr::pivot_longer(cols = !targeted_fdr,
-                        names_to = "Scheme",
-                        values_to = "empirical_fdr") %>%
-    ggplot() +
-    geom_point(aes(x = targeted_fdr, y = empirical_fdr, colour = Scheme, shape = Scheme)) +
-    geom_abline(aes(intercept=0, slope=1)) +
-    ggtitle("Towards a more sensitive diagnostic")
+  plot(worst_y_calibration$calibration$targeted_fdr, colMeans(worst_y_calibration$calibration$fdr))
 })
+
+  # Old diagnostic -- doesn't work as well
+  # knockoffs = rlookc::computeGaussianKnockoffs(X, mu = 0, Sigma = cor(X), num_realizations = 24)
+  # reserved_knockoffs = knockoffs[1:5]
+  # knockoffs = knockoffs[-(1:5)]
+  # calibration_regular = rlookc::simulateY(X, knockoffs, reserved_knockoffs, FUN = function(x) x)
+  # calibration_nayusty = rlookc::simulateY(X, knockoffs, reserved_knockoffs, FUN = "adversarial", kmeans_centers = 2)
+  # calibration_diverse = rlookc::simulateY(X, knockoffs, reserved_knockoffs, FUN = "diverse")
+  # expect_lt(
+  #   calibration_regular$calibration$fdr %>% colMeans %>% sum,
+  #   calibration_nayusty$calibration$fdr %>% colMeans %>% sum
+  # )
+  # expect_lt(
+  #   calibration_regular$calibration$fdr %>% colMeans %>% sum,
+  #   calibration_diverse$calibration$fdr %>% colMeans %>% sum
+  # )
+  # data.frame(
+  #   targeted_fdr = calibration_regular$calibration$targeted_fdrs,
+  #   linear = calibration_regular$calibration$fdr %>% colMeans,
+  #   adversarial = calibration_nayusty$calibration$fdr %>% colMeans,
+  #   diverse_step = calibration_diverse$calibration$fdr %>% colMeans
+  # ) %>%
+  #   tidyr::pivot_longer(cols = !targeted_fdr,
+  #                       names_to = "Scheme",
+  #                       values_to = "empirical_fdr") %>%
+  #   ggplot() +
+  #   geom_point(aes(x = targeted_fdr, y = empirical_fdr, colour = Scheme, shape = Scheme)) +
+  #   geom_abline(aes(intercept=0, slope=1)) +
+  #   ggtitle("Towards a more sensitive diagnostic")
+# })
