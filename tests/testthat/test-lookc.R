@@ -40,6 +40,7 @@ Sigma_inv = Sigma %>% solve
 example_groups = c(list(1:2), as.list(3:10))
 
 # Test with both grouped and individual null hypotheses
+# Does leave-one-one match the slow way via reference code?
 for(do_grouping in c(T, F)){
   label_whether_grouped = function( plot_title ) paste0( plot_title, ifelse( do_grouping, " (grouped)", " (not grouped)" ) )
   if(do_grouping){

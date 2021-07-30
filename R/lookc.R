@@ -15,12 +15,13 @@
 #' @param X @param mu  @param sigma  @param method @param groups  @param diag_s  @param output_type See \code{?generateLooks}.
 #' @param num_realizations Since the knockoff procedure is random, it can be useful to generate many instances,
 #' for instance in simulation studies. If >1, this returns a list of multiple realizations.
+#' @param seeds Random seed. Set this for repeatable results.
 #' @export
 #'
 computeGaussianKnockoffs = function (
   X,
-  mu,
-  Sigma,
+  mu = colMeans(X),
+  Sigma = cov(X),
   groups = NULL,
   method = c("asdp", "sdp", "equi", "group"),
   diag_s = NULL,
@@ -28,8 +29,9 @@ computeGaussianKnockoffs = function (
   num_realizations = 1
 ){
   # Make sure data are scaled to have unit variance
-  stopifnot( "input must be scaled to have unit variance"=isTRUE( all.equal( setNames( diag( Sigma ), NULL),
-                                                                             rep( 1, ncol( Sigma ) ) ) ) )
+  if(!( isTRUE( all.equal( setNames( diag( Sigma ), NULL), rep( 1, ncol( Sigma ) ) ) ) ) ){
+    warning("This code is not well tested with general covariance. Scaling each coordinate to have variance=1 may work better.\n")
+  }
   # Input checking for S solver (Same as Sesia's code)
   method = match.arg(method)
   if ((nrow(Sigma) <= 500) && method == "asdp") {
@@ -53,6 +55,7 @@ computeGaussianKnockoffs = function (
     stop("For multiple realizations, only `output_type='knockoffs'` is supported.\n")
   }
 
+
   # This part is identical to Sesia's original except the added "group" option
   if (is.null(diag_s)) {
     diag_s =
@@ -69,7 +72,7 @@ computeGaussianKnockoffs = function (
   }
   diag_s = as.matrix(diag_s)
   if( all( diag_s == 0 ) ) {
-    warning( "The conditional knockoff covariance matrix is not positive definite. Knockoffs will have no power." )
+    warning( "Knockoffs cannot be constructed except as copies of X. Knockoffs will have no power." )
     return( X )
   }
   # Mostly the same as the original code with a few more named intermediates that will be needed later

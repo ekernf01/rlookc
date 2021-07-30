@@ -43,6 +43,38 @@ aggregateStats = function(stats, groups, FUN = mean){
   stats_agg
 }
 
+#' Get a diagonal matrix from input of unknown shape
+#'
+safe_diag = function(x) {
+  stopifnot(is.vector(x))
+  if(length(x)>1){
+    return(diag(x))
+  } else {
+    return(x)
+  }
+}
+
+#' Get a symmetric inverse square root of an spd matrix via eigendecomposition
+#'
+sqrt_inv = function(X, power = -0.5){
+  eigenstuff = eigen(X, symmetric = T)
+  if(any(eigenstuff$values <= 0)){
+    stop(paste0(
+      "Sorry, this grouped knockoff implementation cannot handle singular covariance matrices within groups.\n",
+      "You'll need to prune one or more of these linearly redundant features: \n", paste0(g, collapse = " "), "\n")
+    )
+  }
+  eigenstuff$vectors %*% safe_diag(eigenstuff$values ^ power) %*% t(eigenstuff$vectors)
+}
+
+# Test of sqrt inv
+# M = matrix(rnorm(160), ncol = 4)
+# M = t(M) %*% M
+# round(sqrt_inv(M, power = -1) %*% M)
+# round(sqrt_inv(M, power = -0.5) %*% M %*% sqrt_inv(M, power = -0.5))
+# round(sqrt_inv(M, power = 1) - M)
+
+
 #' Compute the block-diagonal matrix S for grouped model-X knockoffs using "equi" extension in Dai & Barber 2016.
 #'
 #' Dai, R., & Barber, R. (2016, June). The knockoff filter for FDR control in
@@ -53,31 +85,12 @@ aggregateStats = function(stats, groups, FUN = mean){
 #'
 solveGroupEqui = function(Sigma, groups, do_fast = T){
   stopifnot(isSymmetric(Sigma))
+  # I'm not sure whether this assumes unit-variance data, so I scale it as such and rescale it at the end.
+  original_variances = diag(Sigma)
+  Sigma = diag(1/sqrt(original_variances)) %*% Sigma %*% diag(1/sqrt(original_variances))
+
+  # The actual calculation of S
   D = S = Matrix::Matrix(0, nrow = nrow(Sigma), ncol = ncol(Sigma))
-  safe_diag = function(x) {
-    stopifnot(is.vector(x))
-    if(length(x)>1){
-      return(diag(x))
-    } else {
-      return(x)
-    }
-  }
-  sqrt_inv = function(X, power = -0.5){
-    eigenstuff = eigen(X, symmetric = T)
-    if(any(eigenstuff$values <= 0)){
-      stop(paste0(
-        "Sorry, this grouped knockoff implementation cannot handle singular covariance matrices within groups.\n",
-        "You'll need to prune one or more of these linearly redundant features: \n", paste0(g, collapse = " "), "\n")
-      )
-    }
-    eigenstuff$vectors %*% safe_diag(eigenstuff$values ^ power) %*% t(eigenstuff$vectors)
-  }
-  # Test of sqrt inv
-  # M = matrix(rnorm(160), ncol = 4)
-  # M = t(M) %*% M
-  # round(sqrt_inv(M, power = -1) %*% M)
-  # round(sqrt_inv(M, power = -0.5) %*% M %*% sqrt_inv(M, power = -0.5))
-  # round(sqrt_inv(M, power = 1) - M)
   for(g in groups){
     S[g,g] = Sigma[g,g]
     D[g,g] = sqrt_inv(Sigma[g,g])
@@ -86,6 +99,12 @@ solveGroupEqui = function(Sigma, groups, do_fast = T){
   trace_M = sum(Matrix::diag(M))
   min_eigenvalue = RSpectra::eigs_sym(M, 1, which = "SA", opts = list(retvec = FALSE, maxitr = 1e+05, tol = 1e-08))$values
   S = min(2*min_eigenvalue, 1)*S
-  S = S*0.99 # Make sure it's not too close to a 0 eignvalue
-  return(as.matrix(S))
+
+  # Make sure it's not too close to causing a 0 eigenvalue in G
+  S = S*0.99
+  S = as.matrix(S)
+
+  # Restore the original scaling per coordinate
+  S = diag(sqrt(original_variances)) %*% S %*% diag(sqrt(original_variances))
+  return(S)
 }

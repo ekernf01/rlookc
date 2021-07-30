@@ -6,8 +6,8 @@
 \usage{
 computeGaussianKnockoffs(
   X,
-  mu,
-  Sigma,
+  mu = colMeans(X),
+  Sigma = cov(X),
   groups = NULL,
   method = c("asdp", "sdp", "equi", "group"),
   diag_s = NULL,
@@ -20,6 +20,8 @@ computeGaussianKnockoffs(
 
 \item{num_realizations}{Since the knockoff procedure is random, it can be useful to generate many instances,
 for instance in simulation studies. If >1, this returns a list of multiple realizations.}
+
+\item{seeds}{Random seed. Set this for repeatable results.}
 }
 \description{
 This function is copied and lightly modified from the function \code{create.gaussian}
