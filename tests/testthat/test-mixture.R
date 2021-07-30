@@ -1,3 +1,5 @@
+
+
 test_that("Single-cluster results match the reference", {
   X =
     rbind(
@@ -17,6 +19,21 @@ test_that("Single-cluster results match the reference", {
     Sigma = diag(10)
   )
   testthat::expect_equal(knockoffs, knockoffs_reference, tolerance = 1e-8)
+})
+
+set.seed(1)
+test_that("Code runs when some clusters are unused", {
+  X =
+    rbind(
+      matrix( rnorm( 1e3 ), ncol = 10 ) + 10,
+      matrix( rnorm( 1e3 ), ncol = 10 ) - 10
+    )
+  knockoffs = computeGaussianMixtureKnockoffs(
+    X,
+    mus = list(10, -10),
+    sigmas = list(diag(10), diag(10)),
+    posterior_probs = rep(1, 200) %o% 1:0
+  )
 })
 
 set.seed(1)
