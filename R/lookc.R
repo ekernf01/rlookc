@@ -28,10 +28,6 @@ computeGaussianKnockoffs = function (
   output_type = c("knockoffs", "knockoffs_compact", "statistics", "parameters"),
   num_realizations = 1
 ){
-  # Make sure data are scaled to have unit variance
-  if(!( isTRUE( all.equal( setNames( diag( Sigma ), NULL), rep( 1, ncol( Sigma ) ) ) ) ) ){
-    warning("This code is not well tested with general covariance. Scaling each coordinate to have variance=1 may work better.\n")
-  }
   # Input checking for S solver (Same as Sesia's code)
   method = match.arg(method)
   if ((nrow(Sigma) <= 500) && method == "asdp") {
