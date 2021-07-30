@@ -35,7 +35,7 @@ computeGaussianMixtureKnockoffs = function(
     }
     knockoffs_by_cluster[[cluster_idx]] =
       computeGaussianKnockoffs(
-        X[assignments==cluster_idx,],
+        X[assignments==cluster_idx,,drop = F],
         mu = mus[[cluster_idx]],
         Sigma =sigmas[[cluster_idx]],
         diag_s = diag_s[[cluster_idx]],
