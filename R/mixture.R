@@ -7,6 +7,7 @@
 #' "parameters" output of computeGaussianKnockoffs.
 
 #' @value See output_type parameter.
+#' @export
 #'
 computeGaussianMixtureKnockoffs = function(
   X,
@@ -56,6 +57,8 @@ computeGaussianMixtureKnockoffs = function(
 }
 
 #' Gaussian mixture analog to GenerateLooks.
+#'
+#' @export
 #'
 generateGaussianMixtureLooks = function(
   X, mus, Sigmas,
