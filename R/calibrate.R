@@ -303,17 +303,24 @@ checkCalibration = function(ground_truth, W, targeted_fdrs = (1:10)/10, plot_sav
 #' @param W Knockoff statistics, symmetric under H0
 #' @export
 #'
-knockoffQvals = function (W, offset = 1) {
-  q = rep(NA, length(W))
+knockoffQvals = function (W, offset = 1){
   if (offset != 1 && offset != 0) {
     stop("Input offset must be either 0 or 1")
   }
+  q = rep(NA, length(W))
+  rankByW = ecdf(W)
+  rankByNegW = ecdf(-W)
+  n = length(W)
   ts = sort(c(0, abs(W)))
-  ratio = sapply(ts, function(t) (offset + sum(W <= -t))/max(1, sum(W >= t)))
-  # This step is quadratic in length(W) and could probably be done faster if needed
-  for(k in seq_along(W)){
-    q[[k]] = min(c(ratio[W[[k]]>ts], 1))
-  }
+  ratio =
+    (offset + n*rankByW(-ts)) /
+    pmax(1, n*rankByNegW(-ts))
+  rankByThresholds = ecdf(ts)
+  cum_min_ratio = cummin(ratio)
+  Smax = (n+1)*rankByThresholds(W) - 2
+  is_empty = Smax<1
+  min_eligible_ratio = ifelse(is_empty, Inf, cum_min_ratio[pmax(Smax, 1)])
+  q = min_eligible_ratio %>% pmin(1)
   q
 }
 
@@ -336,3 +343,8 @@ stat.CCA = function(X, X_k, y){
   }
   apply(X, 2, do_one) - apply(X_k, 2, do_one)
 }
+
+
+
+
+

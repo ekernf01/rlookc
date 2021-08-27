@@ -33,6 +33,10 @@ computeGaussianKnockoffs = function (
   if ((nrow(Sigma) <= 500) && method == "asdp") {
     method = "sdp"
   }
+  # Input checking for dimensions
+  stopifnot("Input dimension mismatch for mu"=length(mu) %in% c(1, ncol(X)))
+  stopifnot("Input dimension mismatch for Sigma"=nrow(Sigma)==ncol(X))
+  stopifnot("Input dimension mismatch for Sigma"=ncol(Sigma)==ncol(X))
   # Input checking for groups
   if( method == "group" ){
     if( is.null( groups ) ){
