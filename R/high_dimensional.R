@@ -2,18 +2,17 @@
 #' Create Gaussian knockoffs with dense covariance in a large p, small n setting.
 #'
 #' @param X input features
-#' @param mu Mean
-#'
+#' @param rho tuning parameter with range 0<rho<1. Larger is expected to work better.
+#' @param lambda degree of shrinkage: 0 returns the sample correlations and 1
+#' returns correlations of all 0.
+#' Set this optimally using corpcor::estimate_lambda.
 highDimensionalKnockoffs = function(X, rho = 0.9, lambda = 0.1){
-  stopifnot("Use this only when p>n"=nrow(X)>ncol(X))
-  # TODO: set lambda with corpcor??
-  # TODO: center to 0 mean and scale to unit variance and then go back at the end
-  X = matrix(rnorm(300), nrow = 10)
+  stopifnot("Use this only when p>>n"=nrow(X)>ncol(X))
+  # center to zero mean and scale to unit variance (it goes back at the end of the function)
   mu = apply(X, 2, mean)
   X = sweep(X, 2, mu, FUN = "-")
-  D = apply(X, 2, sd)
-  X = sweep(X, 2, D, FUN = "/")
-  Sigma = cor(X)*(1-lambda) + lambda*diag(ncol(X))
+  standard_deviations = apply(X, 2, sd)
+  X = sweep(X, 2, standard_deviations, FUN = "/")
 
   # svd of reweighted data matrix
   n = nrow(X)
@@ -35,5 +34,9 @@ highDimensionalKnockoffs = function(X, rho = 0.9, lambda = 0.1){
   knockoff_random = matrix(rnorm(prod(dim(X))), nrow = nrow(X))
   go_from_sigma_to_sqrt_c = function(x) sqrt(4*rho*lambda - 4*rho^2*lambda^2/x)
   knockoff_random = multiplywithCustomEigs(knockoff_random, additional_transform = go_from_sigma_to_sqrt_c)
-  return(knockoff_mean + knockoff_random)
+  knockoffs = knockoff_mean + knockoff_random
+  # Restore previous mean and SD
+  knockoffs = sweep(knockoffs, 2, standard_deviations, FUN = "*")
+  knockoffs = sweep(knockoffs, 2, mu, FUN = "+")
+  return(knockoffs)
 }
