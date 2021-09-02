@@ -8,7 +8,9 @@
 #' for downstream use in e.g. unit tests or leave-one-outs.
 
 #' returns correlations of all 0.
-#' Set this optimally using corpcor::estimate_lambda.
+#' You can set this for optimal MSE using corpcor::estimate_lambda.
+#' @export
+#'
 highDimensionalKnockoffs = function(X, rho = 0.9, lambda = 0.1, output_type = c("knockoffs", "parameters") ){
   stopifnot("Use this only when p>>n"=nrow(X)<ncol(X))
   # center to zero mean and scale to unit variance (it goes back at the end of the function)
@@ -16,30 +18,28 @@ highDimensionalKnockoffs = function(X, rho = 0.9, lambda = 0.1, output_type = c(
   X = sweep(X, 2, mu, FUN = "-")
   standard_deviations = apply(X, 2, sd)
   X = sweep(X, 2, standard_deviations, FUN = "/")
-
-  # svd of reweighted data matrix
   n = nrow(X)
-  W = X
-  svdW = svd(W, nv = nrow(X), nu = 0)
+  svdX = svd(X, nv = nrow(X), nu = 0)
   # basic_transform goes singular values to eigs of Sigma
   basic_transform = function(ti) { (1 - lambda)*ti^2/(n-1)  + lambda }
   # additional_transform goes from eigs of Sigma to user defined. Use
   # 1/x for Sigmainv or the ugly thing provided below for the conditional
   # covariance C = 2S-S\Sigma_inv S .
   multiplyBySigma = function(Z, additional_transform = function(x) x ){
-    Zx    = Z  %*% svdW$v %*% Matrix::Diagonal( x = additional_transform( basic_transform( svdW$d ) ) )
-    Zx    = Zx %*% t(svdW$v)
-    Zperp = Z - ( Z %*% svdW$v ) %*% t( svdW$v )
+    Zx    = (Z  %*% svdX$v) %*% Matrix::Diagonal( x = additional_transform( basic_transform( svdX$d ) ) )
+    Zx    = Zx %*% t(svdX$v)
+    Zperp = Z - ( Z %*% svdX$v ) %*% t( svdX$v )
     Zperp = Zperp * additional_transform( basic_transform( 0 ) )
     return( Zx + Zperp )
   }
-  # Conitional mean assuming marginal mean is 0
+  # Conditional mean assuming marginal mean is 0
   knockoff_mean = X - multiplyBySigma( X, additional_transform = function(x) 1/x ) * (2*rho*lambda)
   # Undo centering
   knockoff_mean = sweep(knockoff_mean, 2, mu, FUN = "+")
   # The covariance calculations are finalized inside of the
   # conditional depending on the type of output desired.
   transform_eigenvectors_from_sigma_to_sqrt_c = function(x) sqrt(4*rho*lambda - 4*rho^2*lambda^2/x)
+  output_type = match.arg(output_type)
   if(output_type == "knockoffs"){
     knockoff_random = matrix(rnorm(prod(dim(X))), nrow = nrow(X))
     knockoff_random = multiplyBySigma(knockoff_random,

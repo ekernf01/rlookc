@@ -53,6 +53,8 @@ test_that("Error control works", {
   )
   bad_knockoffs = computeGaussianKnockoffs(X)
   calibration = simulateY(X, knockoffs, shuddup = T)
-  calibration = simulateY(X, bad_knockoffs, shuddup = T)
+  calibration_bad = simulateY(X, bad_knockoffs, shuddup = T)
+  expect_true(all( calibration$calibration$targeted_fdrs > calibration$calibration$fdr %>% colMeans))
+  expect_true(mean( calibration_bad$calibration$targeted_fdrs < calibration_bad$calibration$fdr %>% colMeans) > 0.7)
 })
 

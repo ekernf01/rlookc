@@ -330,6 +330,7 @@ safeCorrelation = function(...) {r = cor(...); r[is.na(r)] = 0; return(r)}
 
 #' A simple, fast test statistic, symmetric under the null, useful for testing knockoff software
 #'
+#' @export
 marginalScreen =   function(X, X_k, y) as.vector(safeCorrelation(X, y) - safeCorrelation(X_k, y))
 
 #' A knockoff statistic capable of handling multivariate Y.
