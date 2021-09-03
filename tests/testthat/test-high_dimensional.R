@@ -8,7 +8,7 @@ test_that("high-dimensional knockoffs are mathematically correct", {
   X = sweep(X, 2, standard_deviations, FUN = "/")
   lambda = 0.1
   rho = 0.9
-  params = highDimensionalKnockoffs(X, output_type = "parameters", lambda = lambda)
+  params = createHighDimensionalKnockoffs(X, output_type = "parameters", lambda = lambda)
   Sigma = cor(X)*(1-lambda) + lambda*diag(ncol(X))
   I = diag(ncol(X))
   set_dimnames = function(X, nm) {

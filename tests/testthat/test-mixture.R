@@ -21,6 +21,20 @@ test_that("Single-cluster results match the reference", {
   testthat::expect_equal(knockoffs, knockoffs_reference, tolerance = 1e-8)
 })
 
+
+test_that("Single-cluster high dim results match the reference", {
+  X = rbind( matrix( rnorm( 1e3 ), ncol = 100 ) )
+  knockoffs = computeGaussianMixtureKnockoffs(
+    X,
+    posterior_probs = matrix(1, ncol = 1, nrow = 10),
+    seed = 0,
+    do_high_dimensional = T
+  )
+  knockoffs_reference = createHighDimensionalKnockoffs(X, seed = 0)
+  dimnames(knockoffs_reference) = NULL
+  testthat::expect_equal(knockoffs, knockoffs_reference, tolerance = 1e-8)
+})
+
 set.seed(1)
 test_that("Code runs when some clusters are unused", {
   X =
@@ -28,12 +42,15 @@ test_that("Code runs when some clusters are unused", {
       matrix( rnorm( 1e3 ), ncol = 10 ) + 10,
       matrix( rnorm( 1e3 ), ncol = 10 ) - 10
     )
-  knockoffs = computeGaussianMixtureKnockoffs(
-    X,
-    mus = list(10, -10),
-    sigmas = list(diag(10), diag(10)),
-    posterior_probs = rep(1, 200) %o% 1:0
-  )
+  expect_silent({
+    knockoffs = computeGaussianMixtureKnockoffs(
+      X,
+      mus = list(10, -10),
+      sigmas = list(diag(10), diag(10)),
+      posterior_probs = rep(1, 200) %o% 1:0
+    )
+  })
+
 })
 
 set.seed(1)

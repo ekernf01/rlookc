@@ -22,9 +22,9 @@ computeGaussianMixtureKnockoffs(
 \arguments{
 \item{do_high_dimensional}{If T, use highDimensionalKnockoffs instead of computeGaussianKnockoffs.}
 
-\item{mus}{@param sigmas  @param diag_s Lists of means, covariances, and valid choices of S, with one element per cluster.}
+\item{mus, sigmas, diag_s}{Lists of means, covariances, and valid choices of S, with one element per cluster.}
 
-\item{posterior_probs}{@param hard_assignments Soft or hard cluster assignments. Specify one but not both.}
+\item{posterior_probs, hard_assignments}{Soft or hard cluster assignments. Specify one but not both.}
 
 \item{lambdas}{List of shrinkage parameters with one element per cluster. Set with corpcor::estimate.lambda for optimal MSE.
 Used only in the high-dimensional case.}

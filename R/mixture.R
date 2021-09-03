@@ -3,8 +3,8 @@
 #' @param ... passed to computeGaussianKnockoffs or highDimensionalKnockoffs.
 #' @param seed Meant for internal use only (in a unit test). This seed is set after sampling cluster assignments and before sampling knockoffs per cluster.
 #' @param do_high_dimensional If T, use highDimensionalKnockoffs instead of computeGaussianKnockoffs.
-#' @param posterior_probs @param hard_assignments Soft or hard cluster assignments. Specify one but not both.
-#' @param mus  @param sigmas  @param diag_s Lists of means, covariances, and valid choices of S, with one element per cluster.
+#' @param posterior_probs,hard_assignments Soft or hard cluster assignments. Specify one but not both.
+#' @param mus,sigmas,diag_s Lists of means, covariances, and valid choices of S, with one element per cluster.
 #' @param lambdas List of shrinkage parameters with one element per cluster. Set with corpcor::estimate.lambda for optimal MSE.
 #' Used only in the high-dimensional case.
 #' @param output_type If "knockoffs", a matrix matching X in shape.
@@ -29,7 +29,8 @@ computeGaussianMixtureKnockoffs = function(
   ...
 ){
   # Check cluster membership input
-  stopifnot("Input only posterior probs or hard assignments.\n"=(!is.null(posterior_probs) & !is.null(posterior_probs)))
+  stopifnot("Input either posterior probs or hard assignments, not both.\n"=!(!is.null(hard_assignments) && !is.null(posterior_probs)))
+  stopifnot("Input either posterior probs or hard assignments, not both.\n"=!( is.null(hard_assignments) &&  is.null(posterior_probs)))
   if(!is.null(posterior_probs)){
     stopifnot("Posterior probs must be n_obs by n_clusters.\n"=nrow(X)==nrow(posterior_probs))
     n_cluster = ncol(posterior_probs)
@@ -48,10 +49,9 @@ computeGaussianMixtureKnockoffs = function(
   } else {
     stopifnot()
   }
-  if(!is.null(sigmas)){
+  stopifnot("Mean and covariance must both be given or neither." = is.null(sigmas) == is.null(mus))
+  if(!is.null(sigmas) || !is.null(mus)){
     stopifnot("Number of clusters must match for all inputs.\n"=length(sigmas)==n_cluster)
-  }
-  if(!is.null(mus)){
     stopifnot("Number of clusters must match for all inputs.\n"=length(mus)==n_cluster)
   }
   if( num_realizations != 1  ){
@@ -71,26 +71,35 @@ computeGaussianMixtureKnockoffs = function(
     }
     if(do_high_dimensional){
       knockoffs_by_cluster[[cluster_idx]] =
-        highDimensionalKnockoffs(
+        createHighDimensionalKnockoffs(
           X[assignments==cluster_idx,,drop = F],
-          lambda = lambdas[[cluster_idx]]
-        )
-    } else {
-      knockoffs_by_cluster[[cluster_idx]] =
-        computeGaussianKnockoffs(
-          X[assignments==cluster_idx,,drop = F],
-          mu = mus[[cluster_idx]],
-          Sigma =sigmas[[cluster_idx]],
-          diag_s = diag_s[[cluster_idx]],
+          lambda = lambdas[[cluster_idx]],
           ...
         )
+    } else {
+      if(is.null(sigmas)){
+        knockoffs_by_cluster[[cluster_idx]] =
+          knockoff::create.second_order(
+            X[assignments==cluster_idx,,drop = F],
+            ...
+          )
+      } else {
+        knockoffs_by_cluster[[cluster_idx]] =
+          computeGaussianKnockoffs(
+            X[assignments==cluster_idx,,drop = F],
+            mu = mus[[cluster_idx]],
+            Sigma =sigmas[[cluster_idx]],
+            diag_s = diag_s[[cluster_idx]],
+            ...
+          )
+      }
     }
   }
   # Return'em in the original order
   put_back_in_order = function(data_by_cluster){
     data_in_order = X
     for(cluster_idx in unique(assignments)){
-      data_in_order[assignments==cluster_idx,] = data_by_cluster[[cluster_idx]]
+      data_in_order[assignments==cluster_idx,] =data_by_cluster[[cluster_idx]]
     }
     data_in_order
   }
