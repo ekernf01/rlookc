@@ -71,9 +71,10 @@ computeGaussianMixtureKnockoffs = function(
     }
     if(do_high_dimensional){
       knockoffs_by_cluster[[cluster_idx]] =
-        createHighDimensionalKnockoffs(
-          X[assignments==cluster_idx,,drop = F],
+        rlookc::createHighDimensionalKnockoffs(
+          X = X[assignments==cluster_idx,,drop = F],
           lambda = lambdas[[cluster_idx]],
+          silent = T,
           ...
         )
     } else {

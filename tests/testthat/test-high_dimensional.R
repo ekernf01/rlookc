@@ -1,3 +1,8 @@
+test_that("high-dimensional knockoffs handle all-0 features", {
+  set.seed(0)
+  X = matrix(rnorm(300), nrow = 10) %>% cbind(0)
+  knockoffs = createHighDimensionalKnockoffs(X, output_type = "knockoffs", lambda = lambda)
+})
 # Sim data
 test_that("high-dimensional knockoffs are mathematically correct", {
   set.seed(0)

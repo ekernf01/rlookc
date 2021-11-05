@@ -12,10 +12,12 @@
 #' You can set this for optimal MSE using corpcor::estimate_lambda.
 #' @export
 #'
-createHighDimensionalKnockoffs = function(X, rho = 0.9, lambda = NULL, output_type = c("knockoffs", "parameters"), seed = NULL ){
+createHighDimensionalKnockoffs = function(X, rho = 0.9, lambda = NULL, silent =F,
+                                          output_type = c("knockoffs", "parameters"), seed = NULL ){
   if(!is.null(seed)){
     set.seed(seed)
   }
+  # Handle too many or too few observations
   stopifnot("Use this only when p>>n"=nrow(X)<ncol(X))
   if(nrow(X)<=3){
     if(!silent){
@@ -27,7 +29,9 @@ createHighDimensionalKnockoffs = function(X, rho = 0.9, lambda = NULL, output_ty
   mu = apply(X, 2, mean)
   X = sweep(X, 2, mu, FUN = "-")
   standard_deviations = apply(X, 2, sd)
-  X = sweep(X, 2, standard_deviations, FUN = "/")
+  nzsd = standard_deviations>0
+  # Handle zero-variance features
+  X[,nzsd] = sweep(X[,nzsd], 2, standard_deviations[nzsd], FUN = "/")
   n = nrow(X)
   svdX = svd(X, nv = nrow(X), nu = 0)
   # Optimal shrinkage
