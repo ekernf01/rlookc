@@ -8,6 +8,7 @@ createHighDimensionalKnockoffs(
   X,
   rho = 0.9,
   lambda = NULL,
+  silent = F,
   output_type = c("knockoffs", "parameters"),
   seed = NULL
 )
@@ -19,12 +20,12 @@ createHighDimensionalKnockoffs(
 
 \item{lambda}{degree of shrinkage: 0 returns the sample correlations and 1}
 
-\item{output_type}{What to return: either knockoffs themselves or parameters
-for downstream use in e.g. unit tests or leave-one-outs.}
-
 \item{silent}{Do not issue warnings.
 returns correlations of all 0.
 You can set this for optimal MSE using corpcor::estimate_lambda.}
+
+\item{output_type}{What to return: either knockoffs themselves or parameters
+for downstream use in e.g. unit tests or leave-one-outs.}
 }
 \description{
 Create Gaussian knockoffs with dense covariance in a large p, small n setting.
