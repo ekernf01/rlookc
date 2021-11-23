@@ -4,7 +4,14 @@
 \alias{KNNTest}
 \title{Run the "KNN diagnostics" from Section 5.1 (page 14) of the Romano et al. Deep Knockoffs paper.}
 \usage{
-KNNTest(X, X_k, n_neighbors = 20)
+KNNTest(X, X_k, n_neighbors = 20, swap_type = c("full", "partial"))
+}
+\arguments{
+\item{X}{Features}
+
+\item{X_k}{knockoffs}
+
+\item{swap_type}{Full compares X, X_k to X_k, X. Partial swaps each column with 50% probability.}
 }
 \description{
 Run the "KNN diagnostics" from Section 5.1 (page 14) of the Romano et al. Deep Knockoffs paper.

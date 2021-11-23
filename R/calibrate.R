@@ -347,18 +347,29 @@ stat.CCA = function(X, X_k, y){
 
 #' Run the "KNN diagnostics" from Section 5.1 (page 14) of the Romano et al. Deep Knockoffs paper.
 #'
+#' @param X Features
+#' @param X_k knockoffs
+#' @param swap_type Full compares X, X_k to X_k, X. Partial swaps each column with 50% probability.
 #' @export
 #'
-KNNTest = function(X, X_k, n_neighbors = 20){
+KNNTest = function(X, X_k, n_neighbors = 20, swap_type = c("full", "partial")){
   if (!requireNamespace("FNN", quietly=TRUE)) {
     stop("Running the KNN diagnostic requires the FNN package.\n")
   }
+  stopifnot(dim(X)==dim(X_k))
   # Do swaps
   p = ncol(X)
   Z = cbind(X, X_k)
   Zswap = Z
   zero_p = c(0, p)
-  vars_to_swap = which(1==rbinom(prob = 0.5, size = 1, n = p))
+  swap_type = match.arg(swap_type)
+  if(swap_type == "full"){
+    vars_to_swap = 1:p
+  } else if(swap_type == "partial"){
+    vars_to_swap = which(1==rbinom(prob = 0.5, size = 1, n = p))
+  } else {
+    stop("Swap type not recognized\n.")
+  }
   for(j in vars_to_swap){
     Zswap[,j + zero_p] = Z[,j + rev(zero_p)]
   }
@@ -378,7 +389,7 @@ KNNTest = function(X, X_k, n_neighbors = 20){
     proportion_not_swapped[[i]] =
       neighbors[i,] %>%
       setdiff(i + c(0, nrow(X), -nrow(X))) %>% # same row of Z or Zswap is not eligible
-      extract(1:n_neighbors) %>% #If the last line did nothing, we still want just 20
+      magrittr::extract(1:n_neighbors) %>% #If the last line did nothing, we still want just 20
       is_neighbor_on_current_side() %>%
       mean
   }
@@ -394,7 +405,7 @@ KNNTest = function(X, X_k, n_neighbors = 20){
   list(
     prop_not_swapped_per_observation = proportion_not_swapped,
     prop_not_swapped = mean(proportion_not_swapped),
-    p_value = pnorm(q = mean(proportion_not_swapped), mean = null_mean, sd = sqrt(null_variance))
+    p_value = pnorm(q = mean(proportion_not_swapped), mean = null_mean, sd = sqrt(null_variance), lower.tail = F)
   )
 }
 

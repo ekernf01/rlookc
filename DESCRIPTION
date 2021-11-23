@@ -16,7 +16,7 @@ Imports:
   tidyr,
   knockoff
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
     FNN
 Config/testthat/edition: 3
 RoxygenNote: 7.1.2
