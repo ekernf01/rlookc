@@ -347,7 +347,12 @@ stat.CCA = function(X, X_k, y){
 
 #' Run the "KNN diagnostics" from Section 5.1 (page 14) of the Romano et al. Deep Knockoffs paper.
 #'
+#' @export
+#'
 KNNTest = function(X, X_k, n_neighbors = 20){
+  if (!requireNamespace("FNN", quietly=TRUE)) {
+    stop("Running the KNN diagnostic requires the FNN package.\n")
+  }
   # Do swaps
   p = ncol(X)
   Z = cbind(X, X_k)
