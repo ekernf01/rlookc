@@ -345,7 +345,52 @@ stat.CCA = function(X, X_k, y){
   apply(X, 2, do_one) - apply(X_k, 2, do_one)
 }
 
-
-
+#' Run the "KNN diagnostics" from Section 5.1 (page 14) of the Romano et al. Deep Knockoffs paper.
+#'
+KNNTest = function(X, X_k, n_neighbors = 20){
+  # Do swaps
+  p = ncol(X)
+  Z = cbind(X, X_k)
+  Zswap = Z
+  zero_p = c(0, p)
+  vars_to_swap = which(1==rbinom(prob = 0.5, size = 1, n = p))
+  for(j in vars_to_swap){
+    Zswap[,j + zero_p] = Z[,j + rev(zero_p)]
+  }
+  # get neighbors
+  neighbors = FNN::get.knn( data = rbind(Z, Zswap),
+                            k = n_neighbors + 1)$nn.index
+  proportion_not_swapped = c()
+  for(i in seq(2*nrow(X))){
+    current_side = ifelse(i>nrow(X), "Z_swap", "Z")
+    is_neighbor_on_current_side = function(nn){
+      if(current_side=="Z_swap"){
+        return(nn > nrow(X))
+      } else {
+        return(nn <= nrow(X))
+      }
+    }
+    proportion_not_swapped[[i]] =
+      neighbors[i,] %>%
+      setdiff(i + c(0, nrow(X), -nrow(X))) %>% # same row of Z or Zswap is not eligible
+      extract(1:n_neighbors) %>% #If the last line did nothing, we still want just 20
+      is_neighbor_on_current_side() %>%
+      mean
+  }
+  proportion_not_swapped %<>% unlist
+  # Null distribution taken from:
+  #
+  #  Schilling, M. F. (1986). Multivariate two-sample tests based on nearest neighbors.
+  # Journal of the American Statistical Association, 81(395), 799-806.
+  #
+  # Theorem 3.1 with lambdas=1/2 and using the limiting value from 3.2.
+  null_mean = 0.5
+  null_variance = 0.5 / (2*nrow(X)*n_neighbors)
+  list(
+    prop_not_swapped_per_observation = proportion_not_swapped,
+    prop_not_swapped = mean(proportion_not_swapped),
+    p_value = pnorm(q = mean(proportion_not_swapped), mean = null_mean, sd = sqrt(null_variance))
+  )
+}
 
 

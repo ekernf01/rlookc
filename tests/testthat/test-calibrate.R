@@ -51,6 +51,24 @@ test_that("Diagnostic catches heteroskedasticity", {
   plot(worst_y_calibration$calibration$targeted_fdr, colMeans(worst_y_calibration$calibration$fdr))
 })
 
+test_that("KNN test has correct null distribution", {
+  set.seed(0)
+  outs = list()
+  for(i in 1:1000){
+    X   = rnorm(1000) %>% matrix(ncol = 10)
+    X_k = rnorm(1000) %>% matrix(ncol = 10)
+    outs[[i]] = KNNTest(X, X_k)
+  }
+  outs %>% sapply(extract2, "prop_not_swapped") %>% summary
+  outs %>% sapply(extract2, "prop_not_swapped") %>% hist(40)
+  outs %>%
+    sapply(extract2, "p_value") %>%
+    sort %>%
+    plot(main ="KNN test calibration",
+         xlab = "rank",
+         ylab = "null p")
+  abline(a = 0, b = 1e-3, col = "red")
+})
   # Old diagnostic -- doesn't work as well
   # knockoffs = rlookc::computeGaussianKnockoffs(X, mu = 0, Sigma = cor(X), num_realizations = 24)
   # reserved_knockoffs = knockoffs[1:5]
