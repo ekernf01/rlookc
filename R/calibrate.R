@@ -19,59 +19,14 @@ chooseDiverseY = function(X, n_quantiles = 10 ){
   return( list( y = y, ground_truth = rep( seq( ncol( X ) ), each = n_quantiles ) ) )
 }
 
-#' Pick P(Y|X) purposefully to reveal bad calibration.
-#'
-#' @param X Covariates from which you want to select an active set, but you are
-#' afraid your modeling assumptions might be wrong.
-#' @param kmeans_centers The diagnostic looks for situations where the variance of
-#' a given variable differs sharply across clusters. You have to manually
-#' specify how many clusters
-#'
-#' @return A list with metadata and values of Y.
-#' Each Y is generated from a univariate step function.
-#' metadata includes the true active variable,
-#' the cutoff used in the step function,
-#' and the variable likely to be found as a false positive
-#' if homoskedastic knockoffs are used.
-#'
-#' @export
-#'
-chooseAdversarialY = function(X, kmeans_centers ){
-  # Cluster the dataset and look for heteroskedasticity
-  clusters = stats::kmeans(X, centers = kmeans_centers)$cluster
-  variances = matrix(NA, nrow = kmeans_centers, ncol = ncol(X))
-  for(j in unique(clusters)){
-    variances[j,] = apply(X[j==clusters,], 2, var)
-  }
-  # Cause each variable in turn to appear as a false positive
-  # Strategy: find an indicator function for a low-variance
-  # region, but based on a different variable.
-  output = data.frame(active_variable = NA,
-                      likely_false_hit = seq(ncol(X)),
-                      cutoff = NA)
-  y =list()
-  for(k in seq(ncol(X))){
-    low_variance_indicator = which.min(variances[,k])==clusters
-    output[k, "active_variable"] = which.max(abs(cor(X, low_variance_indicator)))
-    # Set the cutoff above or below to separate high from low variance
-    direction_of_association = sign(cor(low_variance_indicator, X[, output[k, "active_variable"]]))
-    output[k, "cutoff"] =
-      X[low_variance_indicator, output[k, "active_variable"]] %>%
-      quantile(0.5 - direction_of_association*0.4)
-    y[[k]] = as.numeric(X[,output[k, "active_variable"]] > output[k, "cutoff"])
-  }
-  return(list(metadata = output, y = y))
-}
-
 #' Given X, simulate Y|X and check calibration.
 #'
 #' @export
 #' @param X @param knockoffs A real dataset and a corresponding model-X knockoff realization.
 #' To average out over multiple knockoff realizations, pass in a list of matrices. Any number is fine
 #' if your computer can handle it; the code will cycle through if it's less than n_sim.
-#' @param reserved_knockoffs Like knockoffs, but used only after the worst P(Y|X) has been
-#' chosen from among those tested. Its miscalibration is re-estimated using new knockoffs
-#' to avoid bias due to selective inference.
+#' @param X_observed if there is error in the covariates, you can study it in simulations
+#' by passing in a different value here, to be used in place of X for variable selection.
 #' @param statistic Function used to compute variable importance, e.g. knockoff::stat.glmnet_lambdasmax.
 #' @param ... Passed to statistic, e.g. n_lambda=100.
 #' @param groups Groups for composite hypothesis testing.
@@ -79,16 +34,14 @@ chooseAdversarialY = function(X, kmeans_centers ){
 #' @param n_sim How many simulations to perform.
 #' @param FUN How to simulate Y given some x's, e.g. function(x) all(x>0) + rnorm(1).
 #' Should produce numeric output (not logical, even if you use a step function).
-#' Pass the string "adversarial" or "diverse" for custom options designed to reveal
-#' hidden harms of heteroskedasticity and other unexpected pitfalls.
-#' @param kmeans_centers passed to chooseAdversarialY
+#' Pass the string "diverse" for a sensible default.
 #' @param plot_savepath Passed to check.calibration
 #'
 #' @importFrom magrittr %>%
 #'
 simulateY = function(X,
                      knockoffs,
-                     reserved_knockoffs = NULL,
+                     X_observed = X,
                      statistic = knockoff::stat.glmnet_lambdasmax,
                      groups = seq(ncol(X)),
                      active_set_size = 1,
@@ -96,7 +49,6 @@ simulateY = function(X,
                      FUN = function(x) as.numeric(x>0),
                      plot_savepath = NULL,
                      shuddup = F,
-                     kmeans_centers = kmeans_centers,
                      ... ){
   # You can pass in just one set, or a bunch of knockoff realizations.
   if(!is.list(knockoffs)){
@@ -104,36 +56,13 @@ simulateY = function(X,
   }
   stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = dim(knockoffs[[1                ]])==dim(X))
   stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = dim(knockoffs[[length(knockoffs)]])==dim(X))
-  if(!is.list(reserved_knockoffs) & !is.null(reserved_knockoffs)){
-    reserved_knockoffs = list(reserved_knockoffs)
-    stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = dim(reserved_knockoffs[[1                ]])==dim(X))
-    stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = dim(reserved_knockoffs[[length(reserved_knockoffs)]])==dim(X))
-  }
   if(length(knockoffs)<n_sim & !shuddup){
     warning("More simulations than knockoffs. Knockoffs will be recycled.\n")
   }
   # You can specify Y|X and choose X's randomly, or have it done
   # in a way designed to increase sensitivity.
   {
-    if( identical( FUN, "adversarial" ) )
-    {
-      if( !missing( active_set_size ) ){
-        warning("Adversarial Y|X is only implemented for active_set_size=1 for now.\n")
-        active_set_size = 1
-      }
-      if( !missing( groups ) ){
-        warning("Adversarial Y|X is only implemented for non-grouped tests for now.\n")
-        # groups = seq(length.out = n_sim)
-      }
-      adversarial = chooseAdversarialY(X, kmeans_centers = kmeans_centers)
-      y = adversarial$y
-      active_group_idx = active_variable_idx = adversarial$metadata[,"active_variable"]
-      if(n_sim > length(y)){
-        warning("Adversarial y diagnostic code only generates one y per input variable. Some will be recycled.\n")
-        active_group_idx %<>% rep(length.out = n_sim) %>% as.list()
-      }
-    }
-    else if( identical( FUN, "diverse" ) )
+   if( identical( FUN, "diverse" ) )
     {
       if( !missing( active_set_size ) ){
         warning("The 'diverse' scheme for Y|X is only implemented for active_set_size=1 for now.\n")
@@ -170,7 +99,7 @@ simulateY = function(X,
   # Recycle if needed. This recycling works best if length(y) and length(knockoffs) are
   # relatively prime... sorryyyyyy...
   do_one = function( i ) {
-    statistic( X = X,
+    statistic( X = X_observed,
                X_k = knockoffs[[1 + magrittr::mod(i-1, length(knockoffs))]],
                y = y[[1 + magrittr::mod(i-1, length(y))]], ... )
   }
@@ -393,7 +322,7 @@ KNNTest = function(X, X_k, n_neighbors = 20, swap_type = c("full", "partial")){
       is_neighbor_on_current_side() %>%
       mean
   }
-  proportion_not_swapped %<>% unlist
+  proportion_not_swapped = unlist(proportion_not_swapped)
   # Null distribution taken from:
   #
   #  Schilling, M. F. (1986). Multivariate two-sample tests based on nearest neighbors.
