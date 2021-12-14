@@ -4,10 +4,11 @@ library("magrittr")
 
 # Using calibrate.simulateY, you can simulate from P(Y|X) and check any set of knockoffs you generate.
 # The choice of P(Y|X) has a big effect on the results.
-# When E[Y|X] is linear, this diagnostic has almost no power, as you might expect from
-# work on fixed-X knockoffs. This is shown in "calibration_check3" below.
-# We try to choose a sensible family: step functions of individual features, indicating when they cross 0.
-# You can choose anything and provide it as the FUN argument.
+# When E[Y|X] is linear, this diagnostic has almost no power, as you might expect
+# if you know a lot about fixed-X knockoffs. This is shown in "calibration_check3" below.
+# We try to choose a sensible family.
+# The default is step functions of individual features, indicating when they cross 0.
+# But you can choose anything and provide it as the FUN argument.
 set.seed(0)
 make_bimodal = function(X) rbind(X, X + 10)
 X = rnorm(1e4) %>% matrix(ncol = 10)
@@ -34,8 +35,7 @@ worst_y = rlookc::calibrate.findWorstY(X, good_knockoffs,
 worst_y = rlookc::calibrate.findWorstY(X, bad_knockoffs,
                                        y = collection_of_y$y,
                                        ground_truth = collection_of_y$ground_truth)
-
-# You can compare an arbitrary Y to the worst-case one or otherwise
+# Once these have run, you can compare the worst-case Y to another Y or otherwise
 # try to determine informative properties of the worst-case Y.
 collection_of_y$ground_truth[[worst_y$worst_y]]
 cor( X, collection_of_y$y[[worst_y$worst_y]])
@@ -44,7 +44,7 @@ plot(X[,2], collection_of_y$y[[worst_y$worst_y]], main = "Worst Y")
 plot(X[,2], collection_of_y$y[[6]], main = "Aparently not as bad")
 
 # Using calibrate.KNNTest, you can check exchangeability for any set of knockoffs you generate.
-# This test is less customizable but we find it's much more sensitive.
+# This test is less customizable than the above but we find it's much more sensitive.
 # It is sensitive to any deviation from exchangeability without the need
 # for a careful choice of P(Y|X).
 set.seed(0)
@@ -55,13 +55,14 @@ good_knockoffs = knockoff::create.gaussian(X, mu = 0, Sigma = t(A) %*% A)
 bad_knockoffs = apply(X, 2, sample)
 rlookc::calibrate.KNNTest(X, good_knockoffs)[2:3]
 rlookc::calibrate.KNNTest(X, bad_knockoffs)[2:3]
-# You can even pinpoint outliers (this trick can have weak signal though)
+# You can even pinpoint outliers. (This trick can have weak signal, though.)
 X[1:50,1:5] = -100
 rlookc::calibrate.KNNTest(X, good_knockoffs, n_neighbors = 100)$prop_not_swapped_per_observation %>%
   head(100) %>%
   plot
 # The conservative action to take is to use exact dupes of the data for
 # any observations you think don't fit the model for P(X).
+# This will restore exchangeability, possibly with a loss of power.
 good_knockoffs_outlier_dupe = good_knockoffs
 good_knockoffs_outlier_dupe[1:50,] = X[1:50,]
 rlookc::calibrate.KNNTest(X, good_knockoffs_outlier_dupe, n_neighbors = 100)$prop_not_swapped_per_observation %>%

@@ -96,9 +96,9 @@ grouped_knockoffs = rlookc::create.gaussianKnockoffs(
 plain_knockoffs =  knockoff::create.second_order(
   my_duplicated_features
 )
-# Note the diagonal of the off-diagonal block.
 # Grouped knockoffs are much less correlated with the original features.
 # Power will be correspondingly higher.
+# You can see it in the joint correlation matrix. Check the signals off the diagonal but parallel to it.
 image(cor(cbind(my_duplicated_features, grouped_knockoffs)),
       main = "Joint correlation with grouped knockoffs")
 image(cor(cbind(my_duplicated_features, plain_knockoffs)),
