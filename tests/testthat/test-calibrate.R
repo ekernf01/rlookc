@@ -59,10 +59,10 @@ test_that("KNN test has correct null distribution", {
     X_k = rnorm(1000) %>% matrix(ncol = 10)
     outs[[i]] = KNNTest(X, X_k)
   }
-  outs %>% sapply(extract2, "prop_not_swapped") %>% summary
-  outs %>% sapply(extract2, "prop_not_swapped") %>% hist(40)
+  outs %>% sapply(magrittr::extract2, "prop_not_swapped") %>% summary
+  outs %>% sapply(magrittr::extract2, "prop_not_swapped") %>% hist(40)
   outs %>%
-    sapply(extract2, "p_value") %>%
+    sapply(magrittr::extract2, "p_value") %>%
     sort %>%
     plot(main ="KNN test calibration",
          xlab = "rank",

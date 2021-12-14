@@ -1,3 +1,5 @@
+# This vignette shows off the scaling of our leave-one-out construction.
+
 # Generate data from a simple chain-like hierarchical model
 set.seed(0)
 p = 500
@@ -35,7 +37,8 @@ five_looks_lookc = microbenchmark::microbenchmark(
   looks_from_reimplementation = rlookc::generateLooks(X, mu = mu, Sigma = Sigma, vars_to_omit = 96:100, output_type = "knockoffs")
 )
 
-# In fact, we can we generate all of the LOOKs and compute statistics in 105s.
+# In fact, we can we generate all of the LOOKs and compute statistics in a couple of minutes.
+# Runs in 105s on my computer.
 do_pearson_screen = function(X, ko, y){
   rbind(cor(X, y), cor(ko, y)) %>% set_rownames(c("X", "knockoff"))
 }

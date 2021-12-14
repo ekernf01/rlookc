@@ -100,7 +100,7 @@ for(do_grouping in c(T, F)){
   look_by_naive = list()
   for(i in 1:500){
     if(i%%10==0){cat(".")}
-    if(i%%100==0){cat("meow\n")}
+    if(i%%100==0){cat("\n")}
     # Mathematically incorrect
     look_by_naive[[i]] = reference_knockoff_maker(Z,      mu = 0, Sigma = Sigma,
                                                     groups = example_groups, method = s_method, diag_s = same_s)[, -1]

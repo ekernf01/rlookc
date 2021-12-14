@@ -3,8 +3,8 @@ library("magrittr")
 library("knockoff")
 
 # This vignette tests knockoff error control in subset selection for a vector autoregressive model.
-# Since there is no clear distinction between "Y" and "X", it is unclear (to me) if knockoffs
-# retain their guarantees. I chose to investigate this via simulation.
+# Since there is weird overlap between "Y" and "X" in an autoregressive model, it is unclear (to me) if knockoffs
+# retain their ability to control FDR in subset selection. I chose to investigate this via simulation.
 
 # VAR model parameters
 n_time = 1000
