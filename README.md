@@ -15,6 +15,8 @@ The most informative vignettes for new users are:
 - `vignette_calibration.R` (how to check your models)
 - `vignette_knockoff_construction.R` (how to generate knockoffs)
 
+To see how we use this package in our applications of interest, check out the [central project repo](https://github.com/ekernf01/knockoffs_paper).
+
 #### References
 
 1. Candes, E., Fan, Y., Janson, L., & Lv, J. (2016). Panning for gold: Model-X knockoffs for high-dimensional controlled variable selection. arXiv preprint arXiv:1610.02351.
