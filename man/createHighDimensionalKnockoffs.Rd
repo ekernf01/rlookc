@@ -2,31 +2,10 @@
 % Please edit documentation in R/high_dimensional.R
 \name{createHighDimensionalKnockoffs}
 \alias{createHighDimensionalKnockoffs}
-\title{Create Gaussian knockoffs with dense covariance in a large p, small n setting.}
+\title{Deprecated. See create.highDimensionalKnockoffs}
 \usage{
-createHighDimensionalKnockoffs(
-  X,
-  rho = 0.9,
-  lambda = NULL,
-  silent = F,
-  output_type = c("knockoffs", "parameters"),
-  seed = NULL
-)
-}
-\arguments{
-\item{X}{input features}
-
-\item{rho}{tuning parameter with range 0<rho<1. Larger is expected to work better.}
-
-\item{lambda}{degree of shrinkage: 0 returns the sample correlations and 1}
-
-\item{silent}{Do not issue warnings.
-returns correlations of all 0.
-You can set this for optimal MSE using corpcor::estimate_lambda.}
-
-\item{output_type}{What to return: either knockoffs themselves or parameters
-for downstream use in e.g. unit tests or leave-one-outs.}
+createHighDimensionalKnockoffs(...)
 }
 \description{
-Create Gaussian knockoffs with dense covariance in a large p, small n setting.
+Deprecated. See create.highDimensionalKnockoffs
 }

@@ -2,10 +2,10 @@
 % Please edit documentation in R/save.R
 \name{readCompactLooks}
 \alias{readCompactLooks}
-\title{Alias for loadCompactLooks}
+\title{Deprecated. See saveload.loadCompactLooks}
 \usage{
-readCompactLooks(savepath, filetype = c("csv", "h5"))
+readCompactLooks(...)
 }
 \description{
-Alias for loadCompactLooks
+Deprecated. See saveload.loadCompactLooks
 }

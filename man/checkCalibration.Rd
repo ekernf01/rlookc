@@ -2,28 +2,10 @@
 % Please edit documentation in R/calibrate.R
 \name{checkCalibration}
 \alias{checkCalibration}
-\title{Given a set of knockoff stats and ground-truth nonzero entries, compute
-q-values and compare them against actual false discoveries.}
+\title{Deprecated. See calibrate.checkCalibration}
 \usage{
-checkCalibration(
-  ground_truth,
-  W,
-  targeted_fdrs = (1:10)/10,
-  plot_savepath = NULL,
-  verbose = F,
-  n_var = ncol(W)
-)
-}
-\arguments{
-\item{ground_truth}{List of active sets of length n_sim}
-
-\item{W}{Knockoff statistics from simulations, matrix of size n_sim by n_vars}
-
-\item{targeted_fdrs}{Abcissae for the resulting plots.}
-
-\item{plot_savepath}{Where to save plots.}
+checkCalibration(...)
 }
 \description{
-Given a set of knockoff stats and ground-truth nonzero entries, compute
-q-values and compare them against actual false discoveries.
+Deprecated. See calibrate.checkCalibration
 }

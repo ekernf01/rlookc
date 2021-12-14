@@ -2,46 +2,10 @@
 % Please edit documentation in R/calibrate.R
 \name{simulateY}
 \alias{simulateY}
-\title{Given X, simulate Y|X and check calibration.}
+\title{Deprecated. See calibrate.simulateY}
 \usage{
-simulateY(
-  X,
-  knockoffs,
-  X_observed = X,
-  statistic = knockoff::stat.glmnet_lambdasmax,
-  groups = seq(ncol(X)),
-  active_set_size = 1,
-  n_sim = 500,
-  FUN = function(x) as.numeric(x > 0),
-  plot_savepath = NULL,
-  shuddup = F,
-  ...
-)
-}
-\arguments{
-\item{X}{@param knockoffs A real dataset and a corresponding model-X knockoff realization.
-To average out over multiple knockoff realizations, pass in a list of matrices. Any number is fine
-if your computer can handle it; the code will cycle through if it's less than n_sim.}
-
-\item{X_observed}{if there is error in the covariates, you can study it in simulations
-by passing in a different value here, to be used in place of X for variable selection.}
-
-\item{statistic}{Function used to compute variable importance, e.g. knockoff::stat.glmnet_lambdasmax.}
-
-\item{groups}{Groups for composite hypothesis testing.}
-
-\item{active_set_size}{how many grups to include in the active set for each simulation.}
-
-\item{n_sim}{How many simulations to perform.}
-
-\item{FUN}{How to simulate Y given some x's, e.g. function(x) all(x>0) + rnorm(1).
-Should produce numeric output (not logical, even if you use a step function).
-Pass the string "diverse" for a sensible default.}
-
-\item{plot_savepath}{Passed to check.calibration}
-
-\item{...}{Passed to statistic, e.g. n_lambda=100.}
+simulateY(...)
 }
 \description{
-Given X, simulate Y|X and check calibration.
+Deprecated. See calibrate.simulateY
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/mixture.R
 \name{generateGaussianMixtureLooks}
 \alias{generateGaussianMixtureLooks}
-\title{Gaussian mixture analog to GenerateLooks.}
+\title{Gaussian mixture analog to GenerateLooks: create leave-one-out knockoffs.}
 \usage{
 generateGaussianMixtureLooks(
   X,
@@ -20,5 +20,5 @@ generateGaussianMixtureLooks(
 )
 }
 \description{
-Gaussian mixture analog to GenerateLooks.
+Gaussian mixture analog to GenerateLooks: create leave-one-out knockoffs.
 }

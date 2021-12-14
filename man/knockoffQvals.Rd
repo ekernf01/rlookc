@@ -2,13 +2,10 @@
 % Please edit documentation in R/calibrate.R
 \name{knockoffQvals}
 \alias{knockoffQvals}
-\title{Given knockoff statistics, return q-values.}
+\title{Deprecated. See calibrate.checkCalibration}
 \usage{
-knockoffQvals(W, offset = 1)
-}
-\arguments{
-\item{W}{Knockoff statistics, symmetric under H0}
+knockoffQvals(...)
 }
 \description{
-modified from knockoff::knockoff.threshold
+Deprecated. See calibrate.checkCalibration
 }

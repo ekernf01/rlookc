@@ -1,3 +1,7 @@
+#' Deprecated. See computeGaussianKnockoffs
+#'
+#' @export
+computeGaussianKnockoffs = function(...){ create.gaussianKnockoffs(...) }
 
 #' Compute S, mean, covariance, and realizations of Gaussian knockoffs.
 #'
@@ -18,7 +22,7 @@
 #' @param seeds Random seed. Set this for repeatable results.
 #' @export
 #'
-computeGaussianKnockoffs = function (
+create.gaussianKnockoffs = function (
   X,
   mu = colMeans(X),
   Sigma = cov(X),
@@ -140,7 +144,13 @@ generateLooksSlow = function(
   lapply(vars_to_omit, do_one)
 }
 
-#' Generate and use leave-one-out knockoffs for each variable in X.
+#' Deprecated. See create.looks
+#'
+#' @export
+generateLooks = function(...){ create.looks(...) }
+
+
+#' Generate and use leave-one-out knockoffs for each variable in X, assuming X is IID Gaussian.
 #'
 #' @param X n-by-p matrix of original variables.
 #' @param mu vector of length p, indicating the mean parameter of the Gaussian model for \eqn{X}.
@@ -169,7 +179,7 @@ generateLooksSlow = function(
 #' @param ... Passed to statistic
 #' @return See parameter \code{return_type}.
 #' @export
-generateLooks = function(
+create.looks = function(
   X, mu, Sigma,
   method = c("asdp", "sdp", "equi", "group"),
   groups = NULL,
@@ -257,41 +267,6 @@ getUpdateK = function(k, vars_to_omit, updates){
   updates[[correct_index]]
 }
 
-#' Given the low-rank representations, update knockoffs to omit each variable.
-#'
-#' @param k variable to omit.
-#' @param statistic Optional but useful for memory efficiency: instead of returning all knockoffs, compute statistics using this function, and return those instead.
-#' @param updates @param knockoffs @param vars_to_omit
-#' Inputs should be from \code{loadCompactLooks} or from \code{generateLooks(..., output_type = 'knockoffs_compact'}.)
-#' Those functions return a list with the same names as the necessary args.
-#' @export
-#'
-formAllLooks = function(knockoffs, vars_to_omit, updates, statistic = NULL, X = NULL, ...){
-  if(is.null(statistic)){
-    return( lapply( vars_to_omit, function(k) formOneLook(knockoffs, vars_to_omit, updates, k) ) )
-  } else {
-    stopifnot("Pass original data to formAllLooks if you want test statistics as output.\n"=!is.null(X))
-    return( lapply( vars_to_omit, function(k) statistic( X[,-k], formOneLook(knockoffs, vars_to_omit, updates, k), y = X[,k], ... ) ) )
-  }
-}
-
-#' Given the low-rank representations, update knockoffs to omit one variable.
-#'
-#' @param k variable to omit.
-#' @param updates @param knockoffs @param vars_to_omit
-#' Inputs should be from \code{loadCompactLooks} or from \code{generateLooks(..., output_type = 'knockoffs_compact'}.)
-#' Those functions return a list with the same names as the necessary args.
-#' @export
-#'
-formOneLook = function(knockoffs, vars_to_omit, updates, k){
-  one_update = getUpdateK(k, vars_to_omit, updates)
-  with(one_update,
-       knockoffs[,-k] +
-         getMeanUpdate(one_update) +
-         getRandomUpdate(one_update, n_obs = nrow(knockoffs))
-  )
-}
-
 #' Return mean and covariance used to sample a look. This is only used for checking the math.
 #'
 formLookParameters = function(precomputed_quantities,  vars_to_omit, updates, k){
@@ -306,7 +281,7 @@ formLookParameters = function(precomputed_quantities,  vars_to_omit, updates, k)
   )
 }
 
-#' Output can be added to knockoffs (or their covariance) to correct for removal of a variable.
+#' Output can be added to knockoffs to correct for removal of a variable.
 #'
 getMeanUpdate = function(updates){
   with(updates,

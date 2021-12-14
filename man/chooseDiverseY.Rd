@@ -2,21 +2,10 @@
 % Please edit documentation in R/calibrate.R
 \name{chooseDiverseY}
 \alias{chooseDiverseY}
-\title{Pick P(Y|X) to span a wide range of possibilities.}
+\title{Deprecated. See calibrate.chooseDiverseY.}
 \usage{
-chooseDiverseY(X, n_quantiles = 10)
-}
-\arguments{
-\item{X}{Covariates from which you want to select an active set, but you are
-afraid your modeling assumptions might be wrong.}
-
-\item{n_quantiles}{Each variable is split at this many quantiles and
-Y is set to a collection of step functions indicating their locations.
-Their outputs are smashed together into a matrix.}
-}
-\value{
-A list with values of Y, one matrix of step functions per variable.
+chooseDiverseY(...)
 }
 \description{
-Pick P(Y|X) to span a wide range of possibilities.
+Deprecated. See calibrate.chooseDiverseY.
 }

@@ -1,3 +1,9 @@
+#' Deprecated. See create.gaussianMixtureKnockoffs
+#'
+#' @export
+computeGaussianMixtureKnockoffs = function(...){ create.gaussianMixtureKnockoffs(...) }
+
+
 #' Gaussian mixture analog to computeGaussianKnockoffs.
 #'
 #' @param ... passed to computeGaussianKnockoffs or highDimensionalKnockoffs.
@@ -14,7 +20,7 @@
 #' @return See output_type parameter.
 #' @export
 #'
-computeGaussianMixtureKnockoffs = function(
+create.gaussianMixtureKnockoffs = function(
   X,
   do_high_dimensional = F,
   mus = NULL,
@@ -111,7 +117,7 @@ computeGaussianMixtureKnockoffs = function(
   )
 }
 
-#' Gaussian mixture analog to GenerateLooks.
+#' Gaussian mixture analog to GenerateLooks: create leave-one-out knockoffs.
 #'
 #' @export
 #'

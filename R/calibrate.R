@@ -1,3 +1,8 @@
+#' Deprecated. See calibrate.chooseDiverseY.
+#'
+#' @export
+chooseDiverseY = function(...){ calibrate.chooseDiverseY(...) }
+
 #' Pick P(Y|X) to span a wide range of possibilities.
 #'
 #' @param X  Covariates from which you want to select an active set, but you are
@@ -9,7 +14,7 @@
 #'
 #' @export
 #'
-chooseDiverseY = function(X, n_quantiles = 10 ){
+calibrate.chooseDiverseY = function(X, n_quantiles = 10 ){
   y = list()
   for(k in seq(ncol(X))){
     var_k_quantiles = quantile(X[,k], probs = (1:n_quantiles) / ( n_quantiles+1 ) )
@@ -18,6 +23,11 @@ chooseDiverseY = function(X, n_quantiles = 10 ){
   }
   return( list( y = y, ground_truth = rep( seq( ncol( X ) ), each = n_quantiles ) ) )
 }
+
+#' Deprecated. See calibrate.simulateY
+#'
+#' @export
+simulateY = function(...){ calibrate.simulateY(...) }
 
 #' Given X, simulate Y|X and check calibration.
 #'
@@ -39,7 +49,7 @@ chooseDiverseY = function(X, n_quantiles = 10 ){
 #'
 #' @importFrom magrittr %>%
 #'
-simulateY = function(X,
+calibrate.simulateY = function(X,
                      knockoffs,
                      X_observed = X,
                      statistic = knockoff::stat.glmnet_lambdasmax,
@@ -125,6 +135,12 @@ simulateY = function(X,
   ))
 }
 
+#' Deprecated. See calibrate.findWorstY
+#'
+#' @export
+findWorstY = function(...){ calibrate.findWorstY(...) }
+
+
 #' Given X and various simulated Y|X, find the worst-calibrated Y|X.
 #'
 #' @param X @param X_k A real dataset and a corresponding model-X knockoff realization.
@@ -140,7 +156,7 @@ simulateY = function(X,
 #'
 #' @export
 #'
-findWorstY = function(X,
+calibrate.findWorstY = function(X,
                       X_k,
                       y,
                       ground_truth,
@@ -181,6 +197,13 @@ findWorstY = function(X,
   return(list(calibration = calibration, worst_y = worst_y$y_index))
 }
 
+
+
+#' Deprecated. See calibrate.checkCalibration
+#'
+#' @export
+checkCalibration = function(...){ calibrate.checkCalibration(...) }
+
 #' Given a set of knockoff stats and ground-truth nonzero entries, compute
 #' q-values and compare them against actual false discoveries.
 #'
@@ -190,7 +213,7 @@ findWorstY = function(X,
 #' @param targeted_fdrs Abcissae for the resulting plots.
 #' @param plot_savepath Where to save plots.
 #'
-checkCalibration = function(ground_truth, W, targeted_fdrs = (1:10)/10, plot_savepath = NULL, verbose = F, n_var = ncol(W)){
+calibrate.checkCalibration = function(ground_truth, W, targeted_fdrs = (1:10)/10, plot_savepath = NULL, verbose = F, n_var = ncol(W)){
   qvals = list()
   p_true_discoveries = fdr = matrix(NA, nrow = length(ground_truth), ncol = 10) %>% magrittr::set_colnames(targeted_fdrs)
   stopifnot(nrow(W)==length(ground_truth))
@@ -226,13 +249,21 @@ checkCalibration = function(ground_truth, W, targeted_fdrs = (1:10)/10, plot_sav
   list(targeted_fdrs = targeted_fdrs, fdr = fdr, p_true_discoveries = p_true_discoveries)
 }
 
+
+#' Deprecated. See calibrate.checkCalibration
+#'
+#' @export
+knockoffQvals = function(...){ calibrate.getQvals(...) }
+
+
 #' Given knockoff statistics, return q-values.
 #'
 #' modified from knockoff::knockoff.threshold
 #' @param W Knockoff statistics, symmetric under H0
+#' @param offset Control modified (offset=0) vs traditional (offset=1) FDR. Same as knockoff::knockoff.threshold.
 #' @export
 #'
-knockoffQvals = function (W, offset = 1){
+calibrate.getQvals = function (W, offset = 1){
   if (offset != 1 && offset != 0) {
     stop("Input offset must be either 0 or 1")
   }
@@ -257,10 +288,15 @@ knockoffQvals = function (W, offset = 1){
 #'
 safeCorrelation = function(...) {r = cor(...); r[is.na(r)] = 0; return(r)}
 
+#' Deprecated. See stat.marginalScreen.
+#'
+#' @export
+marginalScreen = function(...){ stat.marginalScreen(...) }
+
 #' A simple, fast test statistic, symmetric under the null, useful for testing knockoff software
 #'
 #' @export
-marginalScreen =   function(X, X_k, y) as.vector(safeCorrelation(X, y) - safeCorrelation(X_k, y))
+stat.marginalScreen =   function(X, X_k, y) as.vector(safeCorrelation(X, y) - safeCorrelation(X_k, y))
 
 #' A knockoff statistic capable of handling multivariate Y.
 #'
@@ -274,6 +310,11 @@ stat.CCA = function(X, X_k, y){
   apply(X, 2, do_one) - apply(X_k, 2, do_one)
 }
 
+#' Deprecated. See calibrate.KNNTest
+#'
+#' @export
+KNNTest = function(...){ calibrate.KNNTest(...) }
+
 #' Run the "KNN diagnostics" from Section 5.1 (page 14) of the Romano et al. Deep Knockoffs paper.
 #'
 #' @param X Features
@@ -281,7 +322,7 @@ stat.CCA = function(X, X_k, y){
 #' @param swap_type Full compares X, X_k to X_k, X. Partial swaps each column with 50% probability.
 #' @export
 #'
-KNNTest = function(X, X_k, n_neighbors = 20, swap_type = c("full", "partial")){
+calibrate.KNNTest = function(X, X_k, n_neighbors = min(20, nrow(X)), swap_type = c("full", "partial")){
   if (!requireNamespace("FNN", quietly=TRUE)) {
     stop("Running the KNN diagnostic requires the FNN package.\n")
   }

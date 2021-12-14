@@ -2,10 +2,10 @@
 % Please edit documentation in R/lookc.R
 \name{getMeanUpdate}
 \alias{getMeanUpdate}
-\title{Output can be added to knockoffs (or their covariance) to correct for removal of a variable.}
+\title{Output can be added to knockoffs to correct for removal of a variable.}
 \usage{
 getMeanUpdate(updates)
 }
 \description{
-Output can be added to knockoffs (or their covariance) to correct for removal of a variable.
+Output can be added to knockoffs to correct for removal of a variable.
 }

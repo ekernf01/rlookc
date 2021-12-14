@@ -2,37 +2,10 @@
 % Please edit documentation in R/lookc.R
 \name{computeGaussianKnockoffs}
 \alias{computeGaussianKnockoffs}
-\title{Compute S, mean, covariance, and realizations of Gaussian knockoffs.}
+\title{Deprecated. See computeGaussianKnockoffs}
 \usage{
-computeGaussianKnockoffs(
-  X,
-  mu = colMeans(X),
-  Sigma = cov(X),
-  groups = NULL,
-  method = c("asdp", "sdp", "equi", "group"),
-  diag_s = NULL,
-  output_type = c("knockoffs", "knockoffs_compact", "statistics", "parameters"),
-  num_realizations = 1
-)
-}
-\arguments{
-\item{X}{@param mu  @param sigma  @param method @param groups  @param diag_s  @param output_type See \code{?generateLooks}.}
-
-\item{num_realizations}{Since the knockoff procedure is random, it can be useful to generate many instances,
-for instance in simulation studies. If >1, this returns a list of multiple realizations.}
-
-\item{seeds}{Random seed. Set this for repeatable results.}
+computeGaussianKnockoffs(...)
 }
 \description{
-This function is copied and lightly modified from the function \code{create.gaussian}
-in Matteo Sesia's R package 'knockoff', licensed
-under GPLv3 and published at https://github.com/msesia/knockoff-filter/tree/master/R .
-I needed to modify it to return some internals and handle groups of variables.
-}
-\details{
-Public use is not recommended when "output_type" is anything but "knockoffs",
-as results are poorly labeled.
-This was done in order to make the interface similar to generateLooks
-while still providing the correct functionality for internal use.
-Users should typically prefer generateLooks or Matteo Sesia's \code{knockoff::create.gaussian}.
+Deprecated. See computeGaussianKnockoffs
 }

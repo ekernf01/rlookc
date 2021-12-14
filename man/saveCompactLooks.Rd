@@ -2,10 +2,10 @@
 % Please edit documentation in R/save.R
 \name{saveCompactLooks}
 \alias{saveCompactLooks}
-\title{Save all the leave-one-out knockoffs to disk, e.g. for reading into Python.}
+\title{Deprecated. See saveload.saveCompactLooks}
 \usage{
-saveCompactLooks(looks, savepath, filetype = c("csv", "h5"))
+saveCompactLooks(...)
 }
 \description{
-Save them in their low-rank representation to avoid wasting space.
+Deprecated. See saveload.saveCompactLooks
 }

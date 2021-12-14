@@ -2,44 +2,10 @@
 % Please edit documentation in R/mixture.R
 \name{computeGaussianMixtureKnockoffs}
 \alias{computeGaussianMixtureKnockoffs}
-\title{Gaussian mixture analog to computeGaussianKnockoffs.}
+\title{Deprecated. See create.gaussianMixtureKnockoffs}
 \usage{
-computeGaussianMixtureKnockoffs(
-  X,
-  do_high_dimensional = F,
-  mus = NULL,
-  sigmas = NULL,
-  posterior_probs = NULL,
-  hard_assignments = NULL,
-  diag_s = NULL,
-  lambdas = NULL,
-  output_type = c("knockoffs", "statistics", "parameters"),
-  num_realizations = 1,
-  seed = NULL,
-  ...
-)
-}
-\arguments{
-\item{do_high_dimensional}{If T, use highDimensionalKnockoffs instead of computeGaussianKnockoffs.}
-
-\item{mus, sigmas, diag_s}{Lists of means, covariances, and valid choices of S, with one element per cluster.}
-
-\item{posterior_probs, hard_assignments}{Soft or hard cluster assignments. Specify one but not both.}
-
-\item{lambdas}{List of shrinkage parameters with one element per cluster. Set with corpcor::estimate.lambda for optimal MSE.
-Used only in the high-dimensional case.}
-
-\item{output_type}{If "knockoffs", a matrix matching X in shape.
-If "parameters", a list with one element per cluster, containing parameters taken directly from the
-"parameters" output of computeGaussianKnockoffs or highDimensionalKnockoffs.}
-
-\item{seed}{Meant for internal use only (in a unit test). This seed is set after sampling cluster assignments and before sampling knockoffs per cluster.}
-
-\item{...}{passed to computeGaussianKnockoffs or highDimensionalKnockoffs.}
-}
-\value{
-See output_type parameter.
+computeGaussianMixtureKnockoffs(...)
 }
 \description{
-Gaussian mixture analog to computeGaussianKnockoffs.
+Deprecated. See create.gaussianMixtureKnockoffs
 }

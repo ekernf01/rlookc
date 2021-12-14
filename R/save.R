@@ -1,8 +1,14 @@
+#' Deprecated. See saveload.saveCompactLooks
+#'
+#' @export
+saveCompactLooks = function(...){ saveload.saveCompactLooks(...) }
+
 #' Save all the leave-one-out knockoffs to disk, e.g. for reading into Python.
 #'
 #' Save them in their low-rank representation to avoid wasting space.
 #'
-saveCompactLooks = function(looks, savepath, filetype = c("csv", "h5")){
+#' @export
+saveload.saveCompactLooks = function(looks, savepath, filetype = c("csv", "h5")){
   dir.create(savepath, recursive = T, showWarnings = F)
   filetype = match.arg(filetype)
   if( filetype == "csv" ){
@@ -11,7 +17,7 @@ saveCompactLooks = function(looks, savepath, filetype = c("csv", "h5")){
       x %>% as.matrix %>% write.csv(file, quote = F, row.names = F)
     }
   } else if( filetype == "h5" ){
-    stop("Not implemented yet.\n")
+    stop("Sorry, hdf5 saving is not implemented yet.\n")
   } else {
     stop("Filetype must be 'csv' or 'h5' ")
   }
@@ -19,13 +25,19 @@ saveCompactLooks = function(looks, savepath, filetype = c("csv", "h5")){
   looks$vars_to_omit %>% do_save( "vars_to_omit" )
   looks$knockoffs    %>% do_save( "knockoffs" )
   for( field in names( looks$updates[[1]] ) ){
-    looks$updates %>% lapply( extract2, field ) %>% lapply(c) %>% Reduce( f = cbind ) %>% do_save( field )
+    looks$updates %>% lapply( magrittr::extract2, field ) %>% lapply(c) %>% Reduce( f = cbind ) %>% do_save( field )
   }
 }
 
+#' Deprecated. See saveload.loadCompactLooks
+#'
+#' @export
+readCompactLooks = loadCompactLooks = function(...){ saveload.loadCompactLooks(...) }
+
 #' Load result of saveCompactLooks
 #'
-loadCompactLooks = function(savepath, filetype = c("csv", "h5")){
+#' @export
+saveload.loadCompactLooks = function(savepath, filetype = c("csv", "h5")){
   # Parse input; set up loaders and slots
   filetype = match.arg(filetype)
   looks = list(knockoffs = NA, groups = NA, vars_to_omit = NA, updates = list(NA))
@@ -60,15 +72,61 @@ loadCompactLooks = function(savepath, filetype = c("csv", "h5")){
   # Reshape updates into the admittedly eccentric original format
   fix_transpose = function(named_updates){
     do_transpose = grepl("right|cov", names(named_updates))
-    named_updates[do_transpose] %<>% lapply(t)
+    named_updates[do_transpose] = lapply(named_updates[do_transpose], t)
     named_updates
   }
   for(k in looks$vars_to_omit){
-    looks$updates[[k]] = lapply(temp, extract, , k,  drop = F) %>% lapply(as.matrix) %>% fix_transpose %>% set_names(names(temp))
+    looks$updates[[k]] =
+      lapply(temp, magrittr::extract, , k,  drop = F) %>%
+      lapply(as.matrix) %>%
+      fix_transpose %>%
+      magrittr::set_names(names(temp))
   }
   looks
 }
 
-#' Alias for loadCompactLooks
+#' Deprecated. See saveload.formAllLooks
 #'
-readCompactLooks = loadCompactLooks
+#' @export
+formAllLooks = function(...){ saveload.formAllLooks(...) }
+
+#' Given the low-rank representations, update knockoffs to omit each variable.
+#'
+#' @param k variable to omit.
+#' @param statistic Optional but perhaps useful for memory efficiency: instead of returning all knockoffs, compute statistics using this function, and return those instead.
+#' @param updates @param knockoffs @param vars_to_omit
+#' Inputs should be previously saved by \code{saveCompactLooks} and read by \code{loadCompactLooks} or from \code{generateLooks(..., output_type = 'knockoffs_compact'}.)
+#' Those functions return a list with the same names as the necessary args.
+#' @export
+#'
+saveload.formAllLooks = function(knockoffs, vars_to_omit, updates, statistic = NULL, X = NULL, ...){
+  if(is.null(statistic)){
+    return( lapply( vars_to_omit, function(k) formOneLook(knockoffs, vars_to_omit, updates, k) ) )
+  } else {
+    stopifnot("Pass original data to formAllLooks if you want test statistics as output.\n"=!is.null(X))
+    return( lapply( vars_to_omit, function(k) statistic( X[,-k], formOneLook(knockoffs, vars_to_omit, updates, k), y = X[,k], ... ) ) )
+  }
+}
+
+
+#' Deprecated. See saveload.formOneLook
+#'
+#' @export
+formOneLook = function(...){ saveload.formOneLook(...) }
+
+#' Given the low-rank representations, update knockoffs to omit one variable.
+#'
+#' @param k variable to omit.
+#' @param updates @param knockoffs @param vars_to_omit
+#' Inputs should be from \code{loadCompactLooks} or from \code{generateLooks(..., output_type = 'knockoffs_compact'}.)
+#' Those functions return a list with the same names as the necessary args.
+#' @export
+#'
+saveload.formOneLook = function(knockoffs, vars_to_omit, updates, k){
+  one_update = getUpdateK(k, vars_to_omit, updates)
+  with(one_update,
+       knockoffs[,-k] +
+         getMeanUpdate(one_update) +
+         getRandomUpdate(one_update, n_obs = nrow(knockoffs))
+  )
+}

@@ -2,10 +2,10 @@
 % Please edit documentation in R/calibrate.R
 \name{marginalScreen}
 \alias{marginalScreen}
-\title{A simple, fast test statistic, symmetric under the null, useful for testing knockoff software}
+\title{Deprecated. See stat.marginalScreen.}
 \usage{
-marginalScreen(X, X_k, y)
+marginalScreen(...)
 }
 \description{
-A simple, fast test statistic, symmetric under the null, useful for testing knockoff software
+Deprecated. See stat.marginalScreen.
 }
