@@ -1,5 +1,5 @@
 # This vignette shows off the scaling of our leave-one-out construction.
-
+library("magrittr")
 # Generate data from a simple chain-like hierarchical model
 set.seed(0)
 p = 500
@@ -39,8 +39,8 @@ five_looks_lookc = microbenchmark::microbenchmark(
 
 # In fact, we can we generate all 100 of the LOOKs and compute statistics in a couple of minutes.
 # Runs in 105s on my computer.
-do_pearson_screen = function(X, ko, y){
-  rbind(cor(X, y), cor(ko, y)) %>% set_rownames(c("X", "knockoff"))
+do_pearson_screen = function(X, X_k, y){
+  cor(X, y) - cor(X_k, y)
 }
 five_hundred_looks_lookc = microbenchmark::microbenchmark(
   times = 1,
