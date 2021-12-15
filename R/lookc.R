@@ -1,7 +1,7 @@
-#' Deprecated. See computeGaussianKnockoffs
+#' Deprecated. See create__gaussianKnockoffs
 #'
 #' @export
-computeGaussianKnockoffs = function(...){ create.gaussianKnockoffs(...) }
+computeGaussianKnockoffs = function(...){ create__gaussianKnockoffs(...) }
 
 #' Compute S, mean, covariance, and realizations of Gaussian knockoffs.
 #'
@@ -22,7 +22,7 @@ computeGaussianKnockoffs = function(...){ create.gaussianKnockoffs(...) }
 #' @param seeds Random seed. Set this for repeatable results.
 #' @export
 #'
-create.gaussianKnockoffs = function (
+create__gaussianKnockoffs = function (
   X,
   mu = colMeans(X),
   Sigma = cov(X),
@@ -68,7 +68,7 @@ create.gaussianKnockoffs = function (
         equi = knockoff::create.solve_equi(Sigma),
         sdp  = knockoff::create.solve_sdp(Sigma),
         asdp = knockoff::create.solve_asdp(Sigma),
-        group = solveGroupEqui(Sigma, groups)
+        group = create__solveGroupEqui(Sigma, groups)
       )
   }
   if( is.vector( diag_s ) ){
@@ -103,10 +103,17 @@ create.gaussianKnockoffs = function (
   )
 }
 
+
+#' Deprecated. See create__looksSlow
+#'
+#' @export
+generateLooksSlow = function(...){ create__looksSlow(...) }
+
 #' Generate leave-one-out knockoffs for each variable in X slowly and simply. Suitable for small problems or software tests.
 #'
 #' @details see ?generateLooks .
-generateLooksSlow = function(
+#' @export
+create__looksSlow = function(
   X, mu, Sigma,
   method = c("asdp", "sdp", "equi", "group"),
   diag_s = NULL,
@@ -123,7 +130,7 @@ generateLooksSlow = function(
     diag_s = diag(diag_s)
   }
   do_one = function(k){
-    ko = computeGaussianKnockoffs(X[,-k],
+    ko = create__gaussianKnockoffs(X[,-k],
                                   mu[-k],
                                   Sigma[-k,-k],
                                   method = method,
@@ -144,10 +151,10 @@ generateLooksSlow = function(
   lapply(vars_to_omit, do_one)
 }
 
-#' Deprecated. See create.looks
+#' Deprecated. See create__looks
 #'
 #' @export
-generateLooks = function(...){ create.looks(...) }
+generateLooks = function(...){ create__looks(...) }
 
 
 #' Generate and use leave-one-out knockoffs for each variable in X, assuming X is IID Gaussian.
@@ -179,7 +186,7 @@ generateLooks = function(...){ create.looks(...) }
 #' @param ... Passed to statistic
 #' @return See parameter \code{return_type}.
 #' @export
-create.looks = function(
+create__looks = function(
   X, mu, Sigma,
   method = c("asdp", "sdp", "equi", "group"),
   groups = NULL,
@@ -198,7 +205,7 @@ create.looks = function(
   }
   output_type = match.arg(output_type)
   # This calls a modification of Matteo Sesia's code that reveals some internals for downstream use.
-  precomputed_quantities = computeGaussianKnockoffs(
+  precomputed_quantities = create__gaussianKnockoffs(
     X = X,
     mu = mu,
     Sigma = Sigma,

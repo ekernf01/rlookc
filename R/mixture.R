@@ -1,7 +1,7 @@
-#' Deprecated. See create.gaussianMixtureKnockoffs
+#' Deprecated. See create__gaussianMixtureKnockoffs
 #'
 #' @export
-computeGaussianMixtureKnockoffs = function(...){ create.gaussianMixtureKnockoffs(...) }
+computeGaussianMixtureKnockoffs = function(...){ create__gaussianMixtureKnockoffs(...) }
 
 
 #' Gaussian mixture analog to computeGaussianKnockoffs.
@@ -20,7 +20,7 @@ computeGaussianMixtureKnockoffs = function(...){ create.gaussianMixtureKnockoffs
 #' @return See output_type parameter.
 #' @export
 #'
-create.gaussianMixtureKnockoffs = function(
+create__gaussianMixtureKnockoffs = function(
   X,
   do_high_dimensional = F,
   mus = NULL,
@@ -86,7 +86,7 @@ create.gaussianMixtureKnockoffs = function(
     } else {
       if(is.null(sigmas)){
         knockoffs_by_cluster[[cluster_idx]] =
-          knockoff::create.second_order(
+          knockoff::create__second_order(
             X[assignments==cluster_idx,,drop = F],
             ...
           )

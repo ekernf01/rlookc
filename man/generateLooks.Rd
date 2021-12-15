@@ -2,10 +2,10 @@
 % Please edit documentation in R/lookc.R
 \name{generateLooks}
 \alias{generateLooks}
-\title{Deprecated. See create.looks}
+\title{Deprecated. See create__looks}
 \usage{
 generateLooks(...)
 }
 \description{
-Deprecated. See create.looks
+Deprecated. See create__looks
 }

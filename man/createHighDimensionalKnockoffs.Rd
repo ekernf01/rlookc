@@ -2,10 +2,10 @@
 % Please edit documentation in R/high_dimensional.R
 \name{createHighDimensionalKnockoffs}
 \alias{createHighDimensionalKnockoffs}
-\title{Deprecated. See create.highDimensionalKnockoffs}
+\title{Deprecated. See create__highDimensionalKnockoffs}
 \usage{
 createHighDimensionalKnockoffs(...)
 }
 \description{
-Deprecated. See create.highDimensionalKnockoffs
+Deprecated. See create__highDimensionalKnockoffs
 }

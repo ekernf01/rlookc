@@ -2,15 +2,10 @@
 % Please edit documentation in R/groups.R
 \name{solveGroupEqui}
 \alias{solveGroupEqui}
-\title{Compute the block-diagonal matrix S for grouped model-X knockoffs using "equi" extension in Dai & Barber 2016.}
+\title{Deprecated. See stats__aggregateStats}
 \usage{
-solveGroupEqui(Sigma, groups, do_fast = T)
+solveGroupEqui(...)
 }
 \description{
-Dai, R., & Barber, R. (2016, June). The knockoff filter for FDR control in
-group-sparse and multitask regression. In International Conference on
-Machine Learning (pp. 1851-1859). PMLR.
-}
-\details{
-See equation 11 and material immediately following it.
+Deprecated. See stats__aggregateStats
 }

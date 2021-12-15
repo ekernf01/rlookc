@@ -2,10 +2,10 @@
 % Please edit documentation in R/save.R
 \name{formAllLooks}
 \alias{formAllLooks}
-\title{Deprecated. See saveload.formAllLooks}
+\title{Deprecated. See saveLoad__formAllLooks}
 \usage{
 formAllLooks(...)
 }
 \description{
-Deprecated. See saveload.formAllLooks
+Deprecated. See saveLoad__formAllLooks
 }

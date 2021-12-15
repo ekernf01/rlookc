@@ -2,10 +2,10 @@
 % Please edit documentation in R/calibrate.R
 \name{checkCalibration}
 \alias{checkCalibration}
-\title{Deprecated. See calibrate.checkCalibration}
+\title{Deprecated. See calibrate__checkCalibration}
 \usage{
 checkCalibration(...)
 }
 \description{
-Deprecated. See calibrate.checkCalibration
+Deprecated. See calibrate__checkCalibration
 }

@@ -2,10 +2,10 @@
 % Please edit documentation in R/calibrate.R
 \name{chooseDiverseY}
 \alias{chooseDiverseY}
-\title{Deprecated. See calibrate.chooseDiverseY.}
+\title{Deprecated. See calibrate__chooseDiverseY.}
 \usage{
 chooseDiverseY(...)
 }
 \description{
-Deprecated. See calibrate.chooseDiverseY.
+Deprecated. See calibrate__chooseDiverseY.
 }

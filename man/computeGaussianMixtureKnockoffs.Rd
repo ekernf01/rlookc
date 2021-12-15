@@ -2,10 +2,10 @@
 % Please edit documentation in R/mixture.R
 \name{computeGaussianMixtureKnockoffs}
 \alias{computeGaussianMixtureKnockoffs}
-\title{Deprecated. See create.gaussianMixtureKnockoffs}
+\title{Deprecated. See create__gaussianMixtureKnockoffs}
 \usage{
 computeGaussianMixtureKnockoffs(...)
 }
 \description{
-Deprecated. See create.gaussianMixtureKnockoffs
+Deprecated. See create__gaussianMixtureKnockoffs
 }

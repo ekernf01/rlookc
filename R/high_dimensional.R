@@ -1,7 +1,7 @@
-#' Deprecated. See create.highDimensionalKnockoffs
+#' Deprecated. See create__highDimensionalKnockoffs
 #'
 #' @export
-createHighDimensionalKnockoffs = function(...){ create.highDimensionalKnockoffs(...) }
+createHighDimensionalKnockoffs = function(...){ create__highDimensionalKnockoffs(...) }
 
 
 #' Create Gaussian knockoffs with dense covariance in a large p, small n setting.
@@ -17,7 +17,7 @@ createHighDimensionalKnockoffs = function(...){ create.highDimensionalKnockoffs(
 #' You can set this for optimal MSE using corpcor::estimate_lambda.
 #' @export
 #'
-create.highDimensionalKnockoffs = function(X, rho = 0.9, lambda = NULL, silent =F,
+create__highDimensionalKnockoffs = function(X, rho = 0.9, lambda = NULL, silent =F,
                                           output_type = c("knockoffs", "parameters"), seed = NULL ){
   if(!is.null(seed)){
     set.seed(seed)

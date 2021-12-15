@@ -2,10 +2,10 @@
 % Please edit documentation in R/groups.R
 \name{aggregateStats}
 \alias{aggregateStats}
-\title{Given one knockoff test stat per variable, return one per group.}
+\title{Deprecated. See stats__aggregateStats}
 \usage{
-aggregateStats(stats, groups, FUN = mean)
+aggregateStats(...)
 }
 \description{
-Given one knockoff test stat per variable, return one per group.
+Deprecated. See stats__aggregateStats
 }

@@ -12,53 +12,57 @@ set.seed(0)
 
 # You can generate leave-one-out knockoffs fast.
 # This gives a list of matrices where element 6 contains knockoffs for X[,-6].
-looks_explicit  = rlookc::create.looks(matrix(rnorm(1e4), nrow = 1e2), mu = 0, Sigma = diag(100), output_type = "knockoffs")
+looks_explicit  = rlookc::create__looks(matrix(rnorm(1e4), nrow = 1e2), mu = 0, Sigma = diag(100), output_type = "knockoffs")
 dim(looks_explicit[[6]])
 # You can also generate leave-one-out knockoffs low memory footprint.
 # These are stored as a set of knockoffs generated with no variables left out, plus
 # a set of low-rank updates to correct them as if they had been done with certain variables left out.
-looks = rlookc::create.looks(matrix(rnorm(1e4), nrow = 1e2), mu = 0, Sigma = diag(100), output_type = "knockoffs_compact")
+looks = rlookc::create__looks(matrix(rnorm(1e4), nrow = 1e2), mu = 0, Sigma = diag(100), output_type = "knockoffs_compact")
 names(looks)
 dim(looks$knockoffs) # The full knockoffs
 lapply(looks$updates[[1]], dim) # The low-rank updates
 # You can save them to disk in a compact form and load them later.
-rlookc::saveload.saveCompactLooks(looks, "demo_compact_looks")
-looks = rlookc::saveload.loadCompactLooks("demo_compact_looks")
+rlookc::saveLoad__saveCompactLooks(looks, "demo_compact_looks")
+looks = rlookc::saveLoad__loadCompactLooks("demo_compact_looks")
 # Clean up the files so the vignette has no side effects
 unlink("demo_compact_looks", recursive = T)
 # You can reconstitute the LOOKs in a more immediately usable form.
 # To save memory, you can do this for one variable at a time.
 # For example, this will give you Gaussian knockoffs for X[,-17].
-looks_just_one = rlookc::saveload.formOneLook(looks$knockoffs,
+looks_just_one = rlookc::saveLoad__formOneLook(looks$knockoffs,
                                               vars_to_omit = looks$vars_to_omit,
                                               updates = looks$updates,
                                               k = 17)
-dim(looks_one_at_a_time)
+dim(looks_just_one)
 # Or you can do them all at once, if you have the RAM for it.
-looks_explicit = rlookc::saveload.formAllLooks(looks$knockoffs,
+looks_explicit = rlookc::saveLoad__formAllLooks(looks$knockoffs,
                                                vars_to_omit = looks$vars_to_omit,
                                                updates = looks$updates)
 length(looks_explicit)
 sapply(looks_explicit, dim)
 # We also have code to load LOOKs into Python and Julia and reconstitute them there.
 # It is minimal but it is unit-tested.
-# It takes the same shapes of files saved by saveload.saveCompactLooks.
+# It takes the same shapes of files saved by saveLoad.saveCompactLooks.
 
 # Another way to save memory is to output feature-importance statistics immediately upon creating LOOKs.
 # It assumes you're doing structure learning, so Y is set equal to the omitted feature.
-symmetric_stats = rlookc::create.looks(matrix(rnorm(1e4), nrow = 1e2), mu = 0, Sigma = diag(100), output_type = "statistics")
+# The argument vars_to_omit indicates which variables to leave out.
+symmetric_stats = rlookc::create__looks(matrix(rnorm(1e4), nrow = 1e2), mu = 0,
+                                        Sigma = diag(100),
+                                        vars_to_omit = 1:10,
+                                        output_type = "statistics")
 sapply(symmetric_stats, length)
 
 # We also have a couple of other features for scalable knockoff construction.
 # You can generate high-dimensional Gaussian knockoffs.
-rather_wide_knockoffs = rlookc::createHighDimensionalKnockoffs( matrix(rnorm(1e7), nrow = 1e2) )
+rather_wide_knockoffs = rlookc::create__highDimensionalKnockoffs( matrix(rnorm(1e7), nrow = 1e2) )
 dim(rather_wide_knockoffs)
 # You can generate mixture-model knockoffs.
 X = matrix(rnorm(1e4), nrow = 1e3)
 X = rbind(X, matrix(rnorm(1e4), nrow = 1e3) + 10)
 library("mclust")
 fitted_mixture_model = mclust::Mclust(X)
-mixture_model_knockoffs = rlookc::create.gaussianMixtureKnockoffs(
+mixture_model_knockoffs = rlookc::create__gaussianMixtureKnockoffs(
   X = X,
   do_high_dimensional = F,
   mus = fitted_mixture_model$parameters$mean %>%
@@ -87,7 +91,7 @@ for(i in 1:10){
   }
 }
 # Use the same groups for knockoff construction
-grouped_knockoffs = rlookc::create.gaussianKnockoffs(
+grouped_knockoffs = rlookc::create__gaussianKnockoffs(
   my_duplicated_features,
   groups = my_groups,
   method = "group"
@@ -98,7 +102,7 @@ plain_knockoffs =  knockoff::create.second_order(
 )
 # Grouped knockoffs are much less correlated with the original features.
 # Power will be correspondingly higher.
-# You can see it in the joint correlation matrix. Check the signals off the diagonal but parallel to it.
+# You can see it in the joint correlation matrix. Check the values off the diagonal but parallel to it.
 image(cor(cbind(my_duplicated_features, grouped_knockoffs)),
       main = "Joint correlation with grouped knockoffs")
 image(cor(cbind(my_duplicated_features, plain_knockoffs)),

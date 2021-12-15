@@ -26,12 +26,16 @@ removeKFromGroups = function( groups, k ){
   groups
 }
 
+#' Deprecated. See stats__aggregateStats
+#'
+#' @export
+aggregateStats = function(...){ stats__aggregateStats(...) }
 
 #' Given one knockoff test stat per variable, return one per group.
 #'
 #' @export
 #'
-aggregateStats = function(stats, groups, FUN = mean){
+stats__aggregateStats = function(stats, groups, FUN = mean){
   if(is.null(dim(stats))){
     stats = matrix(stats, nrow = 1)
   }
@@ -74,6 +78,11 @@ sqrt_inv = function(X, power = -0.5){
 # round(sqrt_inv(M, power = -0.5) %*% M %*% sqrt_inv(M, power = -0.5))
 # round(sqrt_inv(M, power = 1) - M)
 
+#' Deprecated. See stats__aggregateStats
+#'
+#' @export
+solveGroupEqui = function(...){ create__solveGroupEqui(...) }
+
 
 #' Compute the block-diagonal matrix S for grouped model-X knockoffs using "equi" extension in Dai & Barber 2016.
 #'
@@ -83,7 +92,7 @@ sqrt_inv = function(X, power = -0.5){
 #'
 #' See equation 11 and material immediately following it.
 #'
-solveGroupEqui = function(Sigma, groups, do_fast = T){
+create__solveGroupEqui = function(Sigma, groups, do_fast = T){
   stopifnot(isSymmetric(Sigma))
   # I'm not sure whether this assumes unit-variance data, so I scale it as such and rescale it at the end.
   original_variances = diag(Sigma)

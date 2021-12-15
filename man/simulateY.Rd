@@ -2,10 +2,10 @@
 % Please edit documentation in R/calibrate.R
 \name{simulateY}
 \alias{simulateY}
-\title{Deprecated. See calibrate.simulateY}
+\title{Deprecated. See calibrate__simulateY}
 \usage{
 simulateY(...)
 }
 \description{
-Deprecated. See calibrate.simulateY
+Deprecated. See calibrate__simulateY
 }

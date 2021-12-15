@@ -2,10 +2,10 @@
 % Please edit documentation in R/calibrate.R
 \name{knockoffQvals}
 \alias{knockoffQvals}
-\title{Deprecated. See calibrate.checkCalibration}
+\title{Deprecated. See calibrate__checkCalibration}
 \usage{
 knockoffQvals(...)
 }
 \description{
-Deprecated. See calibrate.checkCalibration
+Deprecated. See calibrate__checkCalibration
 }

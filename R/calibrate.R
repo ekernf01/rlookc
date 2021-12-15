@@ -1,7 +1,7 @@
-#' Deprecated. See calibrate.chooseDiverseY.
+#' Deprecated. See calibrate__chooseDiverseY.
 #'
 #' @export
-chooseDiverseY = function(...){ calibrate.chooseDiverseY(...) }
+chooseDiverseY = function(...){ calibrate__chooseDiverseY(...) }
 
 #' Pick P(Y|X) to span a wide range of possibilities.
 #'
@@ -14,7 +14,7 @@ chooseDiverseY = function(...){ calibrate.chooseDiverseY(...) }
 #'
 #' @export
 #'
-calibrate.chooseDiverseY = function(X, n_quantiles = 10 ){
+calibrate__chooseDiverseY = function(X, n_quantiles = 10 ){
   y = list()
   for(k in seq(ncol(X))){
     var_k_quantiles = quantile(X[,k], probs = (1:n_quantiles) / ( n_quantiles+1 ) )
@@ -24,10 +24,10 @@ calibrate.chooseDiverseY = function(X, n_quantiles = 10 ){
   return( list( y = y, ground_truth = rep( seq( ncol( X ) ), each = n_quantiles ) ) )
 }
 
-#' Deprecated. See calibrate.simulateY
+#' Deprecated. See calibrate__simulateY
 #'
 #' @export
-simulateY = function(...){ calibrate.simulateY(...) }
+simulateY = function(...){ calibrate__simulateY(...) }
 
 #' Given X, simulate Y|X and check calibration.
 #'
@@ -49,7 +49,7 @@ simulateY = function(...){ calibrate.simulateY(...) }
 #'
 #' @importFrom magrittr %>%
 #'
-calibrate.simulateY = function(X,
+calibrate__simulateY = function(X,
                      knockoffs,
                      X_observed = X,
                      statistic = knockoff::stat.glmnet_lambdasmax,
@@ -135,10 +135,10 @@ calibrate.simulateY = function(X,
   ))
 }
 
-#' Deprecated. See calibrate.findWorstY
+#' Deprecated. See calibrate__findWorstY
 #'
 #' @export
-findWorstY = function(...){ calibrate.findWorstY(...) }
+findWorstY = function(...){ calibrate__findWorstY(...) }
 
 
 #' Given X and various simulated Y|X, find the worst-calibrated Y|X.
@@ -156,7 +156,7 @@ findWorstY = function(...){ calibrate.findWorstY(...) }
 #'
 #' @export
 #'
-calibrate.findWorstY = function(X,
+calibrate__findWorstY = function(X,
                       X_k,
                       y,
                       ground_truth,
@@ -199,10 +199,10 @@ calibrate.findWorstY = function(X,
 
 
 
-#' Deprecated. See calibrate.checkCalibration
+#' Deprecated. See calibrate__checkCalibration
 #'
 #' @export
-checkCalibration = function(...){ calibrate.checkCalibration(...) }
+checkCalibration = function(...){ calibrate__checkCalibration(...) }
 
 #' Given a set of knockoff stats and ground-truth nonzero entries, compute
 #' q-values and compare them against actual false discoveries.
@@ -213,7 +213,7 @@ checkCalibration = function(...){ calibrate.checkCalibration(...) }
 #' @param targeted_fdrs Abcissae for the resulting plots.
 #' @param plot_savepath Where to save plots.
 #'
-calibrate.checkCalibration = function(ground_truth, W, targeted_fdrs = (1:10)/10, plot_savepath = NULL, verbose = F, n_var = ncol(W)){
+calibrate__checkCalibration = function(ground_truth, W, targeted_fdrs = (1:10)/10, plot_savepath = NULL, verbose = F, n_var = ncol(W)){
   qvals = list()
   p_true_discoveries = fdr = matrix(NA, nrow = length(ground_truth), ncol = 10) %>% magrittr::set_colnames(targeted_fdrs)
   stopifnot(nrow(W)==length(ground_truth))
@@ -250,10 +250,10 @@ calibrate.checkCalibration = function(ground_truth, W, targeted_fdrs = (1:10)/10
 }
 
 
-#' Deprecated. See calibrate.checkCalibration
+#' Deprecated. See calibrate__checkCalibration
 #'
 #' @export
-knockoffQvals = function(...){ calibrate.getQvals(...) }
+knockoffQvals = function(...){ calibrate__getQvals(...) }
 
 
 #' Given knockoff statistics, return q-values.
@@ -263,7 +263,7 @@ knockoffQvals = function(...){ calibrate.getQvals(...) }
 #' @param offset Control modified (offset=0) vs traditional (offset=1) FDR. Same as knockoff::knockoff.threshold.
 #' @export
 #'
-calibrate.getQvals = function (W, offset = 1){
+calibrate__getQvals = function (W, offset = 1){
   if (offset != 1 && offset != 0) {
     stop("Input offset must be either 0 or 1")
   }
@@ -310,10 +310,10 @@ stat.CCA = function(X, X_k, y){
   apply(X, 2, do_one) - apply(X_k, 2, do_one)
 }
 
-#' Deprecated. See calibrate.KNNTest
+#' Deprecated. See calibrate__KNNTest
 #'
 #' @export
-KNNTest = function(...){ calibrate.KNNTest(...) }
+KNNTest = function(...){ calibrate__KNNTest(...) }
 
 #' Run the "KNN diagnostics" from Section 5.1 (page 14) of the Romano et al. Deep Knockoffs paper.
 #'
@@ -322,7 +322,7 @@ KNNTest = function(...){ calibrate.KNNTest(...) }
 #' @param swap_type Full compares X, X_k to X_k, X. Partial swaps each column with 50% probability.
 #' @export
 #'
-calibrate.KNNTest = function(X, X_k, n_neighbors = min(20, nrow(X)), swap_type = c("full", "partial")){
+calibrate__KNNTest = function(X, X_k, n_neighbors = min(20, nrow(X)), swap_type = c("full", "partial")){
   if (!requireNamespace("FNN", quietly=TRUE)) {
     stop("Running the KNN diagnostic requires the FNN package.\n")
   }

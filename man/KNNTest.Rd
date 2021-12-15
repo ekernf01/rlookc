@@ -2,10 +2,10 @@
 % Please edit documentation in R/calibrate.R
 \name{KNNTest}
 \alias{KNNTest}
-\title{Deprecated. See calibrate.KNNTest}
+\title{Deprecated. See calibrate__KNNTest}
 \usage{
 KNNTest(...)
 }
 \description{
-Deprecated. See calibrate.KNNTest
+Deprecated. See calibrate__KNNTest
 }

@@ -2,10 +2,10 @@
 % Please edit documentation in R/calibrate.R
 \name{findWorstY}
 \alias{findWorstY}
-\title{Deprecated. See calibrate.findWorstY}
+\title{Deprecated. See calibrate__findWorstY}
 \usage{
 findWorstY(...)
 }
 \description{
-Deprecated. See calibrate.findWorstY
+Deprecated. See calibrate__findWorstY
 }

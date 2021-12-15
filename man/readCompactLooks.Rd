@@ -2,10 +2,10 @@
 % Please edit documentation in R/save.R
 \name{readCompactLooks}
 \alias{readCompactLooks}
-\title{Deprecated. See saveload.loadCompactLooks}
+\title{Deprecated. See saveLoad__loadCompactLooks}
 \usage{
 readCompactLooks(...)
 }
 \description{
-Deprecated. See saveload.loadCompactLooks
+Deprecated. See saveLoad__loadCompactLooks
 }

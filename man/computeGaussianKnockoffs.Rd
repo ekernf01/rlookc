@@ -2,10 +2,10 @@
 % Please edit documentation in R/lookc.R
 \name{computeGaussianKnockoffs}
 \alias{computeGaussianKnockoffs}
-\title{Deprecated. See computeGaussianKnockoffs}
+\title{Deprecated. See create__gaussianKnockoffs}
 \usage{
 computeGaussianKnockoffs(...)
 }
 \description{
-Deprecated. See computeGaussianKnockoffs
+Deprecated. See create__gaussianKnockoffs
 }

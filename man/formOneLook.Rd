@@ -2,10 +2,10 @@
 % Please edit documentation in R/save.R
 \name{formOneLook}
 \alias{formOneLook}
-\title{Deprecated. See saveload.formOneLook}
+\title{Deprecated. See saveLoad__formOneLook}
 \usage{
 formOneLook(...)
 }
 \description{
-Deprecated. See saveload.formOneLook
+Deprecated. See saveLoad__formOneLook
 }

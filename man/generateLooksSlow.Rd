@@ -2,25 +2,10 @@
 % Please edit documentation in R/lookc.R
 \name{generateLooksSlow}
 \alias{generateLooksSlow}
-\title{Generate leave-one-out knockoffs for each variable in X slowly and simply. Suitable for small problems or software tests.}
+\title{Deprecated. See create__looksSlow}
 \usage{
-generateLooksSlow(
-  X,
-  mu,
-  Sigma,
-  method = c("asdp", "sdp", "equi", "group"),
-  diag_s = NULL,
-  groups = NULL,
-  statistic = knockoff::stat.glmnet_coefdiff,
-  vars_to_omit = 1:ncol(X),
-  output_type = c("knockoffs", "knockoffs_compact", "statistics", "parameters",
-    "pearson"),
-  ...
-)
+generateLooksSlow(...)
 }
 \description{
-Generate leave-one-out knockoffs for each variable in X slowly and simply. Suitable for small problems or software tests.
-}
-\details{
-see ?generateLooks .
+Deprecated. See create__looksSlow
 }

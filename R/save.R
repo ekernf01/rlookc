@@ -1,14 +1,14 @@
-#' Deprecated. See saveload.saveCompactLooks
+#' Deprecated. See saveLoad__saveCompactLooks
 #'
 #' @export
-saveCompactLooks = function(...){ saveload.saveCompactLooks(...) }
+saveCompactLooks = function(...){ saveLoad__saveCompactLooks(...) }
 
 #' Save all the leave-one-out knockoffs to disk, e.g. for reading into Python.
 #'
 #' Save them in their low-rank representation to avoid wasting space.
 #'
 #' @export
-saveload.saveCompactLooks = function(looks, savepath, filetype = c("csv", "h5")){
+saveLoad__saveCompactLooks = function(looks, savepath, filetype = c("csv", "h5")){
   dir.create(savepath, recursive = T, showWarnings = F)
   filetype = match.arg(filetype)
   if( filetype == "csv" ){
@@ -29,15 +29,15 @@ saveload.saveCompactLooks = function(looks, savepath, filetype = c("csv", "h5"))
   }
 }
 
-#' Deprecated. See saveload.loadCompactLooks
+#' Deprecated. See saveLoad__loadCompactLooks
 #'
 #' @export
-readCompactLooks = loadCompactLooks = function(...){ saveload.loadCompactLooks(...) }
+readCompactLooks = loadCompactLooks = function(...){ saveLoad__loadCompactLooks(...) }
 
 #' Load result of saveCompactLooks
 #'
 #' @export
-saveload.loadCompactLooks = function(savepath, filetype = c("csv", "h5")){
+saveLoad__loadCompactLooks = function(savepath, filetype = c("csv", "h5")){
   # Parse input; set up loaders and slots
   filetype = match.arg(filetype)
   looks = list(knockoffs = NA, groups = NA, vars_to_omit = NA, updates = list(NA))
@@ -85,10 +85,10 @@ saveload.loadCompactLooks = function(savepath, filetype = c("csv", "h5")){
   looks
 }
 
-#' Deprecated. See saveload.formAllLooks
+#' Deprecated. See saveLoad__formAllLooks
 #'
 #' @export
-formAllLooks = function(...){ saveload.formAllLooks(...) }
+formAllLooks = function(...){ saveLoad__formAllLooks(...) }
 
 #' Given the low-rank representations, update knockoffs to omit each variable.
 #'
@@ -99,7 +99,7 @@ formAllLooks = function(...){ saveload.formAllLooks(...) }
 #' Those functions return a list with the same names as the necessary args.
 #' @export
 #'
-saveload.formAllLooks = function(knockoffs, vars_to_omit, updates, statistic = NULL, X = NULL, ...){
+saveLoad__formAllLooks = function(knockoffs, vars_to_omit, updates, statistic = NULL, X = NULL, ...){
   if(is.null(statistic)){
     return( lapply( vars_to_omit, function(k) formOneLook(knockoffs, vars_to_omit, updates, k) ) )
   } else {
@@ -109,10 +109,10 @@ saveload.formAllLooks = function(knockoffs, vars_to_omit, updates, statistic = N
 }
 
 
-#' Deprecated. See saveload.formOneLook
+#' Deprecated. See saveLoad__formOneLook
 #'
 #' @export
-formOneLook = function(...){ saveload.formOneLook(...) }
+formOneLook = function(...){ saveLoad__formOneLook(...) }
 
 #' Given the low-rank representations, update knockoffs to omit one variable.
 #'
@@ -122,7 +122,7 @@ formOneLook = function(...){ saveload.formOneLook(...) }
 #' Those functions return a list with the same names as the necessary args.
 #' @export
 #'
-saveload.formOneLook = function(knockoffs, vars_to_omit, updates, k){
+saveLoad__formOneLook = function(knockoffs, vars_to_omit, updates, k){
   one_update = getUpdateK(k, vars_to_omit, updates)
   with(one_update,
        knockoffs[,-k] +
