@@ -17,6 +17,7 @@ Imports:
   knockoff
 Suggests: 
     testthat (>= 3.0.0),
-    FNN
+    FNN,
+    mclust
 Config/testthat/edition: 3
 RoxygenNote: 7.1.2
