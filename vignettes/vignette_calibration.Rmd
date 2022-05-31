@@ -1,7 +1,8 @@
 ---
 title: "Checking calibration"
 output:
-  html_fragment: default
+  md_document:
+    variant: markdown_github
 ---
 
 This vignette demonstrates the new features of our package that
