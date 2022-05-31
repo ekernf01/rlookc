@@ -182,7 +182,8 @@ rlookc::calibrate__KNNTest(X, bad_knockoffs)[2:3]
     ## [1] 0
 
 You can sometimes pinpoint outliers by choosing specific data points
-that have too few swapped neighbors.
+that have too few swapped neighbors. Let us make some outliers and find
+them using the swap + KNN diagnostic.
 
 ``` r
 X[1:50,1:5] = -100
@@ -194,8 +195,8 @@ rlookc::calibrate__KNNTest(X, good_knockoffs, n_neighbors = 100)$prop_not_swappe
 ![](vignette_calibration_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
 The conservative action to take is to use exact dupes of the data for
-any observations you think don’t fit the model for P(X). This will
-restore exchangeability, possibly with a loss of power.
+any observations do not fit the model for P(X). This will restore
+exchangeability, possibly with a loss of power.
 
 ``` r
 good_knockoffs_outlier_dupe = good_knockoffs
