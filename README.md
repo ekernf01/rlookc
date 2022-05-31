@@ -12,8 +12,8 @@ To install, run this. (You need the [`devtools`](https://www.r-project.org/nosvn
 
 The most informative vignettes for new users are:
 
-- [`vignette_calibration.R`](https://github.com/ekernf01/rlookc/blob/main/vignettes/vignette_calibration.R) (how to check your models)
-- [`vignette_knockoff_construction.R`](https://github.com/ekernf01/rlookc/blob/main/vignettes/vignette_knockoff_generation.R) (how to generate knockoffs)
+- [`vignette_calibration`](https://github.com/ekernf01/rlookc/blob/main/vignettes/vignette_calibration.md) (how to check your models)
+- [`vignette_knockoff_construction`](https://github.com/ekernf01/rlookc/blob/main/vignettes/vignette_knockoff_generation.md) (how to generate knockoffs)
 
 To see how we use this package in our applications of interest, check out the [central project repo](https://github.com/ekernf01/knockoffs_paper).
 
