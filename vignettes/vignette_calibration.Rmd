@@ -1,4 +1,8 @@
-## Checking calibration
+---
+title: "Checking calibration"
+output:
+  html_fragment: default
+---
 
 This vignette demonstrates the new features of our package that
 are related to checking FDR calibration and model assumptions.

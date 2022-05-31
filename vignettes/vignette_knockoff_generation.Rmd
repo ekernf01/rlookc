@@ -1,4 +1,8 @@
-## Generating knockoffs 
+---
+title: "Generating knockoffs"
+output:
+  html_fragment: default
+---
 
 This vignette demonstrates the new features of our software that
 allow construction of knockoffs in various ways that either have not been described
