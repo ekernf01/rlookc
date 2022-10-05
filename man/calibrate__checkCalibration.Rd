@@ -7,19 +7,21 @@ q-values and compare them against actual false discoveries.}
 \usage{
 calibrate__checkCalibration(
   ground_truth,
-  W,
+  W = NULL,
   targeted_fdrs = (1:10)/10,
+  qvals = list(),
   plot_savepath = NULL,
-  verbose = F,
-  n_var = ncol(W)
+  verbose = F
 )
 }
 \arguments{
 \item{ground_truth}{List of active sets of length n_sim}
 
-\item{W}{Knockoff statistics from simulations, matrix of size n_sim by n_vars}
+\item{W}{Knockoff statistics from simulations, matrix of size n_sim by n_vars. Ignored if qvals are given.}
 
 \item{targeted_fdrs}{Abcissae for the resulting plots.}
+
+\item{qvals}{q-values from simulations. List of length n_sim containing vectors of length n_vars.}
 
 \item{plot_savepath}{Where to save plots.}
 }
