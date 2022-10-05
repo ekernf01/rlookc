@@ -209,21 +209,34 @@ checkCalibration = function(...){ calibrate__checkCalibration(...) }
 #'
 #' @export
 #' @param ground_truth List of active sets of length n_sim
-#' @param W Knockoff statistics from simulations, matrix of size n_sim by n_vars
+#' @param W Knockoff statistics from simulations, matrix of size n_sim by n_vars. Ignored if qvals are given.
+#' @param qvals q-values from simulations. List of length n_sim containing vectors of length n_vars.
 #' @param targeted_fdrs Abcissae for the resulting plots.
 #' @param plot_savepath Where to save plots.
 #'
-calibrate__checkCalibration = function(ground_truth, W, targeted_fdrs = (1:10)/10, plot_savepath = NULL, verbose = F, n_var = ncol(W)){
-  qvals = list()
-  p_true_discoveries = fdr = matrix(NA, nrow = length(ground_truth), ncol = 10) %>% magrittr::set_colnames(targeted_fdrs)
-  stopifnot(nrow(W)==length(ground_truth))
-  stopifnot(ncol(W)==n_var)
+calibrate__checkCalibration = function(ground_truth, W = NULL, targeted_fdrs = (1:10)/10, qvals = list(), plot_savepath = NULL, verbose = F){
+  if(length(qvals)>0){
+    if(!is.null(W)){
+      stop("Please specify either 'W' or 'qvals' but not both.")
+    }
+    stopifnot(length(qvals)==length(ground_truth))
+    n_var = length(qvals[[1]])
+  } else {
+    if(is.null(W)){
+      stop("Please specify 'W' or 'qvals' (but not both).")
+    }
+    n_var = ncol(W)
+    stopifnot(nrow(W)==length(ground_truth))
+  }
+  p_true_discoveries = fdr = matrix(NA, nrow = length(ground_truth), ncol = length(targeted_fdrs)) %>% magrittr::set_colnames(targeted_fdrs)
   for(i in seq_along(ground_truth)){
     if(i%%25==0 & verbose){
       cat(i, "")
     }
     idx = ground_truth[[i]]
-    qvals[[i]] = knockoffQvals(W[i, ])
+    if(!is.null(W)){
+      qvals[[i]] = knockoffQvals(W[i, ])
+    }
     na2zero =function(q) { q[is.na(q)]=0; q }
     for(j in seq_along(targeted_fdrs)){
       selected = qvals[[i]] %>% magrittr::is_weakly_less_than(targeted_fdrs[[j]]) %>% which
