@@ -17,6 +17,10 @@ The most informative vignettes for new users are:
 
 To see how we use this package in our applications of interest, check out the [central project repo](https://github.com/ekernf01/knockoffs_paper).
 
+#### Derivations
+
+This package implements certain order-of-magnitude speedups through linear algebra tricks. Those are derived in the [appendices](https://www.biorxiv.org/content/10.1101/2023.05.23.541948v1.supplementary-material) of our [paper](https://www.biorxiv.org/content/10.1101/2023.05.23.541948v1) applying this work to transcriptional regulation.
+
 #### References
 
 1. Candes, E., Fan, Y., Janson, L., & Lv, J. (2016). Panning for gold: Model-X knockoffs for high-dimensional controlled variable selection. arXiv preprint arXiv:1610.02351.
