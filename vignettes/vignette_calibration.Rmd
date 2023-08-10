@@ -11,6 +11,8 @@ are related to checking FDR calibration and model assumptions.
 ```{r}
 library("magrittr")
 library("ggplot2")
+library("knockoff")
+library("rlookc")
 ```
 
 Here are some good and bad knockoffs to start with.

@@ -20,4 +20,4 @@ Suggests:
     FNN,
     mclust
 Config/testthat/edition: 3
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3

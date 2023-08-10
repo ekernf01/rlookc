@@ -12,14 +12,21 @@ test_that("q-values match reference", {
 
 
 test_that("Simulations run", {
-  expect_silent({
+  expect_invisible({
     calibration = simulateY(X = matrix(rnorm(1000), ncol = 20),
                             knockoffs = replicate(5, matrix(rnorm(1000), ncol = 20), simplify = F),
                             n_sim = 50,
                             shuddup = T)
   })
+  expect_invisible({
+    calibration = simulateY(X = matrix(rnorm(1000), ncol = 20),
+                            knockoffs = NULL,
+                            alternative_method = function(y, X) runif(ncol(X)),
+                            n_sim = 50,
+                            shuddup = T)
+  })
   X = matrix(rnorm(1000), ncol = 20)
-  expect_silent({
+  expect_invisible({
     calibration = findWorstY(
       X,
       X_k = matrix(rnorm(1000), ncol = 20),
@@ -69,32 +76,4 @@ test_that("KNN test has correct null distribution", {
          ylab = "null p")
   abline(a = 0, b = 1e-3, col = "red")
 })
-  # Old diagnostic -- doesn't work as well
-  # knockoffs = rlookc::computeGaussianKnockoffs(X, mu = 0, Sigma = cor(X), num_realizations = 24)
-  # reserved_knockoffs = knockoffs[1:5]
-  # knockoffs = knockoffs[-(1:5)]
-  # calibration_regular = rlookc::simulateY(X, knockoffs, reserved_knockoffs, FUN = function(x) x)
-  # calibration_nayusty = rlookc::simulateY(X, knockoffs, reserved_knockoffs, FUN = "adversarial", kmeans_centers = 2)
-  # calibration_diverse = rlookc::simulateY(X, knockoffs, reserved_knockoffs, FUN = "diverse")
-  # expect_lt(
-  #   calibration_regular$calibration$fdr %>% colMeans %>% sum,
-  #   calibration_nayusty$calibration$fdr %>% colMeans %>% sum
-  # )
-  # expect_lt(
-  #   calibration_regular$calibration$fdr %>% colMeans %>% sum,
-  #   calibration_diverse$calibration$fdr %>% colMeans %>% sum
-  # )
-  # data.frame(
-  #   targeted_fdr = calibration_regular$calibration$targeted_fdrs,
-  #   linear = calibration_regular$calibration$fdr %>% colMeans,
-  #   adversarial = calibration_nayusty$calibration$fdr %>% colMeans,
-  #   diverse_step = calibration_diverse$calibration$fdr %>% colMeans
-  # ) %>%
-  #   tidyr::pivot_longer(cols = !targeted_fdr,
-  #                       names_to = "Scheme",
-  #                       values_to = "empirical_fdr") %>%
-  #   ggplot() +
-  #   geom_point(aes(x = targeted_fdr, y = empirical_fdr, colour = Scheme, shape = Scheme)) +
-  #   geom_abline(aes(intercept=0, slope=1)) +
-  #   ggtitle("Towards a more sensitive diagnostic")
-# })
+

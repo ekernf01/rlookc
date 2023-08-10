@@ -6,7 +6,7 @@
 \usage{
 calibrate__simulateY(
   X,
-  knockoffs,
+  knockoffs = NULL,
   X_observed = X,
   statistic = knockoff::stat.glmnet_lambdasmax,
   groups = seq(ncol(X)),
@@ -15,6 +15,9 @@ calibrate__simulateY(
   FUN = function(x) as.numeric(x > 0),
   plot_savepath = NULL,
   shuddup = F,
+  alternative_method = NULL,
+  rng_seed = 0,
+  cores = parallel::detectCores(),
   ...
 )
 }
@@ -24,23 +27,41 @@ To average out over multiple knockoff realizations, pass in a list of matrices. 
 if your computer can handle it; the code will cycle through if it's less than n_sim.}
 
 \item{X_observed}{if there is error in the covariates, you can study it in simulations
-by passing in a different value here, to be used in place of X for variable selection.}
+by passing in the true X above and the observed X (with error) here.
+The true X will be used to simulate Y and the observed X will be used for subset selection.}
 
 \item{statistic}{Function used to compute variable importance, e.g. knockoff::stat.glmnet_lambdasmax.}
 
 \item{groups}{Groups for composite hypothesis testing.}
 
-\item{active_set_size}{how many grups to include in the active set for each simulation.}
+\item{active_set_size}{how many groups to include in the active set for each simulation.}
 
 \item{n_sim}{How many simulations to perform.}
 
-\item{FUN}{How to simulate Y given some x's, e.g. function(x) all(x>0) + rnorm(1).
+\item{FUN}{How to simulate Y given the active variables from a single observation, e.g. function(x) 1*all(x>0) + rnorm(1).
 Should produce numeric output (not logical, even if you use a step function).
 Pass the string "diverse" for a sensible default.}
 
 \item{plot_savepath}{Passed to check.calibration}
 
-\item{...}{Passed to statistic, e.g. n_lambda=100.}
+\item{cores}{Number of cores to use.}
+
+\item{...}{Passed to statistic, e.g. n_lambda=100, or alternate_method (these are never both used).}
+
+\item{alternate_method}{An alternative method of controlling FDR. Should
+accept args y (vector length n, covariates) and X (matrix n by p). Should return
+a vector of q-values of length p.}
+}
+\value{
+List with elements:
+- groups: list of groups of variables, one per group unless you are testing grouped subset selection (e.g. LD blocks)
+- ground_truth: list where each element is a list of groups of variables used in constructing the corresponding y.
+- stats: symmetric stats from
+- calibration: dataframe with expected and observed FDR
+- statistic: function used inside the knockoff filter as variable or group importance
+- FUN: function used to simulate y
+- active_set_size: size of each active set (number of groups of variables)
+- n_sim: number of simulations
 }
 \description{
 Given X, simulate Y|X and check calibration.

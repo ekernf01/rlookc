@@ -16,6 +16,8 @@ or have been described without open-source code:
 
 ```{r }
 library("magrittr")
+library("knockoff")
+library("rlookc")
 set.seed(0)
 ```
 

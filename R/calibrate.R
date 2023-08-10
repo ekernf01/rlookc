@@ -36,21 +36,36 @@ simulateY = function(...){ calibrate__simulateY(...) }
 #' To average out over multiple knockoff realizations, pass in a list of matrices. Any number is fine
 #' if your computer can handle it; the code will cycle through if it's less than n_sim.
 #' @param X_observed if there is error in the covariates, you can study it in simulations
-#' by passing in a different value here, to be used in place of X for variable selection.
+#' by passing in the true X above and the observed X (with error) here.
+#' The true X will be used to simulate Y and the observed X will be used for subset selection.
 #' @param statistic Function used to compute variable importance, e.g. knockoff::stat.glmnet_lambdasmax.
-#' @param ... Passed to statistic, e.g. n_lambda=100.
+#' @param ... Passed to statistic, e.g. n_lambda=100, or alternate_method (these are never both used).
 #' @param groups Groups for composite hypothesis testing.
-#' @param active_set_size how many grups to include in the active set for each simulation.
+#' @param active_set_size how many groups to include in the active set for each simulation.
 #' @param n_sim How many simulations to perform.
-#' @param FUN How to simulate Y given some x's, e.g. function(x) all(x>0) + rnorm(1).
+#' @param FUN How to simulate Y given the active variables from a single observation, e.g. function(x) 1*all(x>0) + rnorm(1).
 #' Should produce numeric output (not logical, even if you use a step function).
 #' Pass the string "diverse" for a sensible default.
 #' @param plot_savepath Passed to check.calibration
+#' @param cores Number of cores to use.
+#' @param alternate_method An alternative method of controlling FDR. Should
+#' accept args y (vector length n, covariates) and X (matrix n by p). Should return
+#' a vector of q-values of length p.
 #'
 #' @importFrom magrittr %>%
 #'
+#' @returns List with elements:
+#' - groups: list of groups of variables, one per group unless you are testing grouped subset selection (e.g. LD blocks)
+#' - ground_truth: list where each element is a list of groups of variables used in constructing the corresponding y.
+#' - stats: symmetric stats from
+#' - calibration: dataframe with expected and observed FDR
+#' - statistic: function used inside the knockoff filter as variable or group importance
+#' - FUN: function used to simulate y
+#' - active_set_size: size of each active set (number of groups of variables)
+#' - n_sim: number of simulations
+#'
 calibrate__simulateY = function(X,
-                     knockoffs,
+                     knockoffs = NULL,
                      X_observed = X,
                      statistic = knockoff::stat.glmnet_lambdasmax,
                      groups = seq(ncol(X)),
@@ -59,15 +74,24 @@ calibrate__simulateY = function(X,
                      FUN = function(x) as.numeric(x>0),
                      plot_savepath = NULL,
                      shuddup = F,
+                     alternative_method = NULL,
+                     rng_seed = 0,
+                     cores = parallel::detectCores(),
                      ... ){
+  set.seed(rng_seed)
   # You can pass in just one set, or a bunch of knockoff realizations.
-  if(!is.list(knockoffs)){
-    knockoffs = list(knockoffs)
-  }
-  stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = dim(knockoffs[[1                ]])==dim(X))
-  stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = dim(knockoffs[[length(knockoffs)]])==dim(X))
-  if(length(knockoffs)<n_sim & !shuddup){
-    warning("More simulations than knockoffs. Knockoffs will be recycled.\n")
+  if(is.null(alternative_method)){
+    stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = !is.null(knockoffs))
+    if(!is.list(knockoffs)){
+      knockoffs = list(knockoffs)
+    }
+    stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = dim(knockoffs[[1                ]])==dim(X))
+    stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = dim(knockoffs[[length(knockoffs)]])==dim(X))
+    if(length(knockoffs)<n_sim & !shuddup){
+      warning("More simulations than knockoffs. Knockoffs will be recycled.\n")
+    }
+  } else {
+    stopifnot("Knockoffs are ignored if alternative_method is specified." = is.null(knockoffs))
   }
   # You can specify Y|X and choose X's randomly, or have it done
   # in a way designed to increase sensitivity.
@@ -105,28 +129,41 @@ calibrate__simulateY = function(X,
       y = lapply(active_variable_idx, function(s) apply(X[,s, drop = F], 1, FUN))
     }
   }
-  # Run the knockoff filter using different knockoffs and y's each time.
-  # Recycle if needed. This recycling works best if length(y) and length(knockoffs) are
-  # relatively prime... sorryyyyyy...
-  do_one = function( i ) {
-    statistic( X = X_observed,
-               X_k = knockoffs[[1 + magrittr::mod(i-1, length(knockoffs))]],
-               y = y[[1 + magrittr::mod(i-1, length(y))]], ... )
+  if(is.null(alternative_method)){
+    # Run the knockoff filter using different knockoffs and y's each time.
+    # Recycle if needed. This recycling works best if length(y) and length(knockoffs) are
+    # relatively prime... sorryyyyyy...
+    do_one = function( i ) {
+      if(i%%100==1){cat("\n",i)}
+      statistic( X = X_observed,
+                 X_k = knockoffs[[1 + magrittr::mod(i-1, length(knockoffs))]],
+                 y = y[[i]], ... )
+    }
+    stats = W = parallel::mclapply( seq(n_sim), do_one, mc.cores = cores) %>%
+      simplify2array %>%
+      t %>%
+      aggregateStats(groups)
+    calibration = checkCalibration(ground_truth = active_group_idx,
+                                   W = W,
+                                   plot_savepath = plot_savepath)
+  } else {
+    do_one = function( i ) {
+      if(i%%100==1){cat("\n",i)}
+      q = alternative_method( y = y[[i]], X = X_observed, ... )
+      stopifnot("alternative_method must return a vector of qvals of length ncol(X)" = length(q)==ncol(X))
+      return(q)
+    }
+
+    stats = qvals = parallel::mclapply( seq(n_sim), do_one, mc.cores = cores)
+    calibration = checkCalibration(ground_truth = active_group_idx,
+                                   qvals = qvals,
+                                   plot_savepath = plot_savepath)
   }
-  W =
-    sapply( seq(n_sim), do_one) %>%
-    t %>%
-    aggregateStats(groups)
-  y_index = 1 + magrittr::mod(seq(n_sim), length(y))
-  # How did it do?
-  calibration = checkCalibration(ground_truth = active_group_idx,
-                                 W = W,
-                                 plot_savepath = plot_savepath)
+
   return(list(
     groups = groups,
     ground_truth = active_group_idx,
-    stats = W,
-    y_index = y_index,
+    stats = stats,
     calibration = calibration,
     statistic = statistic,
     FUN = FUN,
