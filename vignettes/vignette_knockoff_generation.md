@@ -136,6 +136,8 @@ immediately upon creating LOOKs. It assumes you’re doing structure
 learning, so Y is set equal to the omitted feature. The argument
 vars_to_omit indicates which variables to leave out.
 
+The reason each output has length 99 is that we are doing structure learning on a set of 100 variables, and for each variable, there are 99 possible neighbors. 
+
 ``` r
 symmetric_stats = rlookc::create__looks(matrix(rnorm(1e4), nrow = 1e2), mu = 0,
                                         Sigma = diag(100),
