@@ -220,7 +220,8 @@ mixture_model_knockoffs = rlookc::create__gaussianMixtureKnockoffs(
 )
 ```
 
-Here’s a quick check of the knockoff exchangeability condition. Red is
+Here’s a quick check of the knockoff exchangeability condition, just to 
+demonstrate that the mixture model knockoffs are constructed correctly. Red is
 the original data and blue and green each have a different variable
 swapped with its knockoffs.
 
