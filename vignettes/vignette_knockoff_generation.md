@@ -14,8 +14,13 @@ set.seed(0)
 
 ### Leave-one-out knockoffs (LOOKs)
 
-You can generate leave-one-out knockoffs fast. This code created a list
-of matrices where element 6 contains knockoffs for X\[,-6\].
+LOOKs are for structure learning, similar to graphical LASSO. 
+Just like graphical LASSO, you need to run D separate regressions where D is the dimension of each observation in your dataset.
+To run knockoff-based variable selection D times, you need to generate D sets of knockoffs, each missing one variable.
+This gets expensive, so we used linear algebra tricks to speed it up.
+
+You can use our code like this to generate leave-one-out knockoffs fast. This code creates a list
+of matrices where element k contains knockoffs for X\[,-k\].
 
 ``` r
 looks_explicit  = rlookc::create__looks(matrix(rnorm(1e4), nrow = 1e2), mu = 0, Sigma = diag(100), output_type = "knockoffs")
@@ -25,9 +30,8 @@ dim(looks_explicit[[6]])
     ## [1] 100  99
 
 You can also generate leave-one-out knockoffs with low memory footprint.
-These are stored as a set of knockoffs generated with no variables left
-out, plus a set of low-rank updates to correct them as if they had been
-done with specified variables left out.
+These are stored using an algebraic decomposition: a typical set of knockoffs generated with no variables left
+out, plus a set of low-rank updates to correct them one by one.
 
 ``` r
 looks = rlookc::create__looks(matrix(rnorm(1e4), nrow = 1e2), mu = 0, Sigma = diag(100), output_type = "knockoffs_compact")
