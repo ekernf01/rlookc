@@ -12,7 +12,7 @@ calibrate__simulateY(
   groups = seq(ncol(X)),
   active_set_size = 1,
   n_sim = 500,
-  FUN = function(x) as.numeric(x > 0),
+  FUN = function(x) as.numeric(all(x > 0)),
   plot_savepath = NULL,
   shuddup = F,
   alternative_method = NULL,
@@ -39,8 +39,7 @@ The true X will be used to simulate Y and the observed X will be used for subset
 \item{n_sim}{How many simulations to perform.}
 
 \item{FUN}{How to simulate Y given the active variables from a single observation, e.g. function(x) 1*all(x>0) + rnorm(1).
-Should produce numeric output (not logical, even if you use a step function).
-Pass the string "diverse" for a sensible default.}
+Should produce numeric output (not logical, even if you use a step function).}
 
 \item{plot_savepath}{Passed to check.calibration}
 
@@ -60,7 +59,8 @@ List with elements:
 - calibration: dataframe with expected and observed FDR
 - statistic: function used inside the knockoff filter as variable or group importance
 - FUN: function used to simulate y
-- active_set_size: size of each active set (number of groups of variables)
+- active_set_size: size of each active set (number of groups of variables). Provide a positive integer or a vector of
+    positive integers of length n_sim. Each integer refers to a group of variables (in the "groups" arg above).
 - n_sim: number of simulations
 }
 \description{

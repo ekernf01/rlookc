@@ -16,7 +16,7 @@ calibrate__KNNTest(
 
 \item{X_k}{knockoffs}
 
-\item{swap_type}{Full compares X, X_k to X_k, X. Partial swaps each column with 50% probability.}
+\item{swap_type}{Full compares X, X_k to X_k, X. Partial swaps each column with probability 0.5.}
 }
 \description{
 Run the "KNN diagnostics" from Section 5.1 (page 14) of the Romano et al. Deep Knockoffs paper.

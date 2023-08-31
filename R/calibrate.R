@@ -45,7 +45,6 @@ simulateY = function(...){ calibrate__simulateY(...) }
 #' @param n_sim How many simulations to perform.
 #' @param FUN How to simulate Y given the active variables from a single observation, e.g. function(x) 1*all(x>0) + rnorm(1).
 #' Should produce numeric output (not logical, even if you use a step function).
-#' Pass the string "diverse" for a sensible default.
 #' @param plot_savepath Passed to check.calibration
 #' @param cores Number of cores to use.
 #' @param alternate_method An alternative method of controlling FDR. Should
@@ -61,7 +60,8 @@ simulateY = function(...){ calibrate__simulateY(...) }
 #' - calibration: dataframe with expected and observed FDR
 #' - statistic: function used inside the knockoff filter as variable or group importance
 #' - FUN: function used to simulate y
-#' - active_set_size: size of each active set (number of groups of variables)
+#' - active_set_size: size of each active set (number of groups of variables). Provide a positive integer or a vector of
+#'     positive integers of length n_sim. Each integer refers to a group of variables (in the "groups" arg above).
 #' - n_sim: number of simulations
 #'
 calibrate__simulateY = function(X,
@@ -71,7 +71,7 @@ calibrate__simulateY = function(X,
                      groups = seq(ncol(X)),
                      active_set_size = 1,
                      n_sim = 500,
-                     FUN = function(x) as.numeric(x>0),
+                     FUN = function(x) as.numeric(all(x>0)),
                      plot_savepath = NULL,
                      shuddup = F,
                      alternative_method = NULL,
@@ -79,7 +79,7 @@ calibrate__simulateY = function(X,
                      cores = parallel::detectCores(),
                      ... ){
   set.seed(rng_seed)
-  # You can pass in just one set, or a bunch of knockoff realizations.
+  # You can pass in just one set of knockoffs, or a bunch of knockoff realizations.
   if(is.null(alternative_method)){
     stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = !is.null(knockoffs))
     if(!is.list(knockoffs)){
@@ -93,49 +93,29 @@ calibrate__simulateY = function(X,
   } else {
     stopifnot("Knockoffs are ignored if alternative_method is specified." = is.null(knockoffs))
   }
-  # You can specify Y|X and choose X's randomly, or have it done
-  # in a way designed to increase sensitivity.
-  {
-   if( identical( FUN, "diverse" ) )
-    {
-      if( !missing( active_set_size ) ){
-        warning("The 'diverse' scheme for Y|X is only implemented for active_set_size=1 for now.\n")
-      }
-      if( !missing( groups ) ){
-        warning("The 'diverse' scheme for Y|X is only implemented for non-grouped tests for now.\n")
-      }
-      if( !missing( statistic ) ){
-        warning("The 'diverse' scheme for Y|X has multivariate 'y' so 'statistic' will be overridden by a special default.\n")
-      }
-      active_set_size = 1
-      # groups = seq(length.out = n_sim)
-      statistic = stat.CCA
-      diverse_y = chooseDiverseY(X)
-      y = diverse_y$y
-      active_group_idx = active_variable_idx = diverse_y$ground_truth
-      if(n_sim != length(y)){
-        warning("The 'diverse' scheme for Y|X generates 10 y's per input variable. If n_sim is different, some Y's will be recycled or ignored.\n")
-        active_group_idx %<>% rep(length.out = n_sim) %>% as.list()
-      }
-    }
-    else
-    {
-      active_group_idx    =
-        replicate(n = n_sim,
-                  simplify = F,
-                  sample(seq_along(groups), replace = F, size = active_set_size)
-        )
-      active_variable_idx = active_group_idx %>% lapply(function(g) Reduce(union, groups[g]) )
-      y = lapply(active_variable_idx, function(s) apply(X[,s, drop = F], 1, FUN))
-    }
+
+  # Set up the active set
+  if(length(active_set_size)==1){
+    active_set_size = rep(active_set_size, n_sim)
   }
+  active_group_idx = as.list(rep(NA, n_sim))
+  for( i in 1:n_sim ){
+    active_group_idx[[i]] = sample(
+      seq_along(groups),
+      replace = F,
+      size = active_set_size[[i]]
+    )
+  }
+  active_variable_idx = active_group_idx %>% lapply(function(g) Reduce(union, groups[g]) )
+  # Generate the targets
+  y = lapply(active_variable_idx, function(s) apply(X[,s, drop = F], 1, FUN))
+  # Run the knockoff filter using different knockoffs and y's each time.
   if(is.null(alternative_method)){
-    # Run the knockoff filter using different knockoffs and y's each time.
-    # Recycle if needed. This recycling works best if length(y) and length(knockoffs) are
-    # relatively prime... sorryyyyyy...
     do_one = function( i ) {
       if(i%%100==1){cat("\n",i)}
       statistic( X = X_observed,
+                 # Recycle if needed. This recycling is dumb and it works best if length(y) and length(knockoffs) are
+                 # relatively prime.
                  X_k = knockoffs[[1 + magrittr::mod(i-1, length(knockoffs))]],
                  y = y[[i]], ... )
     }
@@ -149,7 +129,10 @@ calibrate__simulateY = function(X,
   } else {
     do_one = function( i ) {
       if(i%%100==1){cat("\n",i)}
-      q = alternative_method( y = y[[i]], X = X_observed, ... )
+      q = tryCatch(
+        expr = {alternative_method( y = y[[i]], X = X_observed, ... )},
+        error = function(e) rep(1, ncol(X_observed)) #if method errs out, return all q=1
+      )
       stopifnot("alternative_method must return a vector of qvals of length ncol(X)" = length(q)==ncol(X))
       return(q)
     }
@@ -369,7 +352,8 @@ KNNTest = function(...){ calibrate__KNNTest(...) }
 #'
 #' @param X Features
 #' @param X_k knockoffs
-#' @param swap_type Full compares X, X_k to X_k, X. Partial swaps each column with 50% probability.
+#' @param swap_type Full compares X, X_k to X_k, X. Partial swaps each column with probability 0.5.
+#'
 #' @export
 #'
 calibrate__KNNTest = function(X, X_k, n_neighbors = min(20, nrow(X)), swap_type = c("full", "partial")){

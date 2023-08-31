@@ -18,7 +18,7 @@ create__highDimensionalKnockoffs(
 
 \item{rho}{tuning parameter with range 0<rho<1. Larger is expected to work better.}
 
-\item{lambda}{degree of shrinkage: 0 returns the sample correlations and 1}
+\item{lambda}{degree of shrinkage: 0 returns the sample estimator and 1 returns the shrinkage target}
 
 \item{silent}{Do not issue warnings.
 returns correlations of all 0.

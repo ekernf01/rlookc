@@ -8,7 +8,7 @@ createHighDimensionalKnockoffs = function(...){ create__highDimensionalKnockoffs
 #'
 #' @param X input features
 #' @param rho tuning parameter with range 0<rho<1. Larger is expected to work better.
-#' @param lambda degree of shrinkage: 0 returns the sample correlations and 1
+#' @param lambda degree of shrinkage: 0 returns the sample estimator and 1 returns the shrinkage target
 #' @param output_type What to return: either knockoffs themselves or parameters
 #' for downstream use in e.g. unit tests or leave-one-outs.
 #' @param silent Do not issue warnings.
@@ -34,8 +34,8 @@ create__highDimensionalKnockoffs = function(X, rho = 0.9, lambda = NULL, silent 
   mu = apply(X, 2, mean)
   X = sweep(X, 2, mu, FUN = "-")
   standard_deviations = apply(X, 2, sd)
-  nzsd = standard_deviations>0
   # Handle zero-variance features
+  nzsd = standard_deviations>0
   X[,nzsd] = sweep(X[,nzsd], 2, standard_deviations[nzsd], FUN = "/")
   n = nrow(X)
   svdX = svd(X, nv = nrow(X), nu = 0)
