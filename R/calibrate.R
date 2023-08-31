@@ -131,13 +131,17 @@ calibrate__simulateY = function(X,
       if(i%%100==1){cat("\n",i)}
       q = tryCatch(
         expr = {alternative_method( y = y[[i]], X = X_observed, ... )},
-        error = function(e) rep(1, ncol(X_observed)) #if method errs out, return all q=1
+        error = function(e) {
+          warning("On iteration ", i, " alternative_method hit an error with text:\n ",
+                e, " \n. We will set q=1 and proceed.")
+          rep(1, ncol(X))
+        }
       )
       stopifnot("alternative_method must return a vector of qvals of length ncol(X)" = length(q)==ncol(X))
       return(q)
     }
 
-    stats = qvals = parallel::mclapply( seq(n_sim), do_one, mc.cores = cores)
+    stats = qvals = lapply( seq(n_sim), do_one)
     calibration = checkCalibration(ground_truth = active_group_idx,
                                    qvals = qvals,
                                    plot_savepath = plot_savepath)
