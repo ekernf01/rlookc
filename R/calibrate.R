@@ -65,19 +65,19 @@ simulateY = function(...){ calibrate__simulateY(...) }
 #' - n_sim: number of simulations
 #'
 calibrate__simulateY = function(X,
-                     knockoffs = NULL,
-                     X_observed = X,
-                     statistic = knockoff::stat.glmnet_lambdasmax,
-                     groups = seq(ncol(X)),
-                     active_set_size = 1,
-                     n_sim = 500,
-                     FUN = function(x) as.numeric(all(x>0)),
-                     plot_savepath = NULL,
-                     shuddup = F,
-                     alternative_method = NULL,
-                     rng_seed = 0,
-                     cores = parallel::detectCores(),
-                     ... ){
+                                knockoffs = NULL,
+                                X_observed = X,
+                                statistic = knockoff::stat.glmnet_lambdasmax,
+                                groups = seq(ncol(X)),
+                                active_set_size = 1,
+                                n_sim = 500,
+                                FUN = function(x) as.numeric(all(x>0)) + rnorm(n=1,sd=0.1),
+                                plot_savepath = NULL,
+                                shuddup = F,
+                                alternative_method = NULL,
+                                rng_seed = 0,
+                                cores = parallel::detectCores(),
+                                ... ){
   set.seed(rng_seed)
   # You can pass in just one set of knockoffs, or a bunch of knockoff realizations.
   if(is.null(alternative_method)){
@@ -113,13 +113,19 @@ calibrate__simulateY = function(X,
   if(is.null(alternative_method)){
     do_one = function( i ) {
       if(i%%100==1){cat("\n",i)}
-      statistic( X = X_observed,
-                 # Recycle if needed. This recycling is dumb and it works best if length(y) and length(knockoffs) are
-                 # relatively prime.
-                 X_k = knockoffs[[1 + magrittr::mod(i-1, length(knockoffs))]],
-                 y = y[[i]], ... )
+      try(
+        {
+          w = statistic( X = X_observed,
+                         # Recycle if needed. This recycling is dumb and it works best if length(y) and length(knockoffs) are
+                         # relatively prime.
+                         X_k = knockoffs[[1 + magrittr::mod(i-1, length(knockoffs))]],
+                         y = y[[i]], ... )
+          return(w)
+        }
+      )
+      return(rep(0, ncol(X)))
     }
-    stats = W = parallel::mclapply( seq(n_sim), do_one, mc.cores = cores) %>%
+    W = parallel::mclapply( seq(n_sim), do_one, mc.cores = cores) %>%
       simplify2array %>%
       t %>%
       aggregateStats(groups)
@@ -133,15 +139,15 @@ calibrate__simulateY = function(X,
         expr = {alternative_method( y = y[[i]], X = X_observed, ... )},
         error = function(e) {
           warning("On iteration ", i, " alternative_method hit an error with text:\n ",
-                e, " \n. We will set q=1 and proceed.")
+                  e, " \n. We will set q=1 and proceed.")
           rep(1, ncol(X))
         }
       )
       stopifnot("alternative_method must return a vector of qvals of length ncol(X)" = length(q)==ncol(X))
       return(q)
     }
-
-    stats = qvals = lapply( seq(n_sim), do_one)
+    W = NULL
+    qvals = lapply( seq(n_sim), do_one)
     calibration = checkCalibration(ground_truth = active_group_idx,
                                    qvals = qvals,
                                    plot_savepath = plot_savepath)
@@ -150,7 +156,7 @@ calibrate__simulateY = function(X,
   return(list(
     groups = groups,
     ground_truth = active_group_idx,
-    stats = stats,
+    stats = W,
     calibration = calibration,
     statistic = statistic,
     FUN = FUN,
@@ -181,21 +187,21 @@ findWorstY = function(...){ calibrate__findWorstY(...) }
 #' @export
 #'
 calibrate__findWorstY = function(X,
-                      X_k,
-                      y,
-                      ground_truth,
-                      split = rep(c(F, T), length.out = nrow(X)),
-                      statistic = knockoff::stat.glmnet_lambdasmax,
-                      plot_savepath = NULL,
-                      ... ){
+                                 X_k,
+                                 y,
+                                 ground_truth,
+                                 split = rep(c(F, T), length.out = nrow(X)),
+                                 statistic = knockoff::stat.glmnet_lambdasmax,
+                                 plot_savepath = NULL,
+                                 ... ){
   stopifnot("Knockoffs must be a matrix or a list of matrices equal in size to X" = dim(X_k)==dim(X))
   # Run the knockoff filter across all Y and all knockoffs.
   W = sapply(
-        y,
-        function(yi) {
-          statistic(X[split,], X_k[split,], yi[split])
-        }
-      ) %>% t
+    y,
+    function(yi) {
+      statistic(X[split,], X_k[split,], yi[split])
+    }
+  ) %>% t
   fdr = checkCalibration(ground_truth = ground_truth,
                          W = W,
                          plot_savepath = plot_savepath)$fdr %>%
@@ -216,8 +222,8 @@ calibrate__findWorstY = function(X,
   # Re-estimate miscalibration to avoid selection bias
   W = statistic(X[!split,], X_k[!split,], y[[worst_y$y_index]][!split]) %>% matrix(nrow = 1)
   calibration = checkCalibration( ground_truth = list(worst_y$y_index),
-                          W,
-                          plot_savepath = plot_savepath)
+                                  W,
+                                  plot_savepath = plot_savepath)
   return(list(calibration = calibration, worst_y = worst_y$y_index))
 }
 

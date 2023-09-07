@@ -12,7 +12,7 @@ calibrate__simulateY(
   groups = seq(ncol(X)),
   active_set_size = 1,
   n_sim = 500,
-  FUN = function(x) as.numeric(all(x > 0)),
+  FUN = function(x) as.numeric(all(x > 0)) + rnorm(n = 1, sd = 0.1),
   plot_savepath = NULL,
   shuddup = F,
   alternative_method = NULL,

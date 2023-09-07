@@ -13,7 +13,7 @@ test_that("q-values match reference", {
 
 test_that("Simulations handle failures of user-provided alternative_method", {
   expect_warning({
-    calibration = simulateY(X = matrix(rnorm(1000), ncol = 20),
+    calibration = calibrate__simulateY(X = matrix(rnorm(1000), ncol = 20),
                             alternative_method = function(y, X) stop("nyah nyah"),
                             n_sim = 5,
                             shuddup = T)
@@ -22,13 +22,13 @@ test_that("Simulations handle failures of user-provided alternative_method", {
 
 test_that("Simulations run", {
   expect_invisible({
-    calibration = simulateY(X = matrix(rnorm(1000), ncol = 20),
+    calibration = calibrate__simulateY(X = matrix(rnorm(1000), ncol = 20),
                             knockoffs = replicate(5, matrix(rnorm(1000), ncol = 20), simplify = F),
                             n_sim = 50,
                             shuddup = T)
   })
   expect_invisible({
-    calibration = simulateY(X = matrix(rnorm(1000), ncol = 20),
+    calibration = calibrate__simulateY(X = matrix(rnorm(1000), ncol = 20),
                             knockoffs = NULL,
                             alternative_method = function(y, X) runif(ncol(X)),
                             n_sim = 50,
