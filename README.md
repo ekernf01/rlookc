@@ -2,7 +2,7 @@
 
 The framework of *Model-X knockoffs* and the corresponding R package [`knockoff`](https://cran.r-project.org/web/packages/knockoff/index.html) together provide FDR control for subset selection in sparse regression models with multivariate Gaussian covariates (1). Model-X knockoffs have also been applied for structure learning via graphical lasso (2) by leaving out each variable in turn, and they have been mathematically extended to enable testing of composite hypotheses (3,4,5) and mixture models for covariates (6). 
 
-To facilitate progress in applications, especially in causal modeling of transcription, this package provides efficient free software for (l)eave-(o)ne-(o)ut (k)nockoff (c)onstruction in R (hence `rlookc`). We offer both simple and composite null hypotheses, plus an implementation of Gaussian mixture model knockoffs. We also include certain features for checking model assumptions and FDR calibration, notably the K-nearest neighbors exchangeability test from (7).
+To facilitate progress in applications, especially in causal modeling of transcription, this package provides efficient free software for structure learning via (l)eave-(o)ne-(o)ut (k)nockoff (c)onstruction in R (hence `rlookc`). We offer both simple and composite null hypotheses, plus an implementation of Gaussian mixture model knockoffs. We also include certain features for checking model assumptions and FDR calibration, notably the K-nearest neighbors exchangeability test from (7).
 
 #### Getting started
 
