@@ -261,8 +261,8 @@ plain_knockoffs =  knockoff::create.second_order(
 ```
 
 Grouped knockoffs are much less correlated with the original features.
-Power will be correspondingly higher. You can see it in the joint
-correlation matrix. Check the values off the diagonal but parallel to
+Power will be correspondingly higher. You can see this in the joint
+correlation matrix in the values that are off the diagonal but parallel to
 it.
 
 ``` r
