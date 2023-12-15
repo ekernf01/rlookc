@@ -1,6 +1,6 @@
 This vignette demonstrates the new features of our software that allow
 construction of knockoffs in various ways that either have not been
-described or have been described without open-source code:
+described before or have been described without open-source code:
 
 -   fast leave-one-out knockoffs (LOOKs)
 -   Gaussian knockoffs with p>n
